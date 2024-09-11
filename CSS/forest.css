@@ -18,6 +18,8 @@ body{
 
 .config{
     background-color: #6F584B;
+    width: 50px;
+    height: 50px;
 }
 
 .statbars{
