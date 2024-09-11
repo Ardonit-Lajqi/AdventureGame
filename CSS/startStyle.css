@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Handjet:wght@100..900&display=swap');
+
+body{
+    background-color: #172A3A;
+    color: white;
+    font-family: "Handjet", sans-serif;
+    letter-spacing: 3px;
+}
+
+header{
+    background-color: #2C4860;
+}
+
+.card{
+    width: 250px;
+    border: 4px solid #2C4860;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.rotate-forest{
+    transform: translateY(25px);
+    rotate: -10deg;
+}
+
+.rotate-sand{
+    transform: translateY(25px);
+    rotate: 10deg;
+}
+
+footer{
+    background-color: #2C4860;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
