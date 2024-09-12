@@ -146,7 +146,7 @@
                             <h1 class="text-center text-light mt-2">What do you do?</h1>
                             <div class="row text-center mt-3">
                                 <div class="col-4 mb-3" id="choices">
-                                    <a class="btn choices text-light" onclick="ChoicesBoxDuplicater()">Jag vill stoppa upp ett uppgrag</a>
+                                    <a class="btn choices text-light" onclick="ChoicesBoxDuplicater(); this.onclick = null; ">Jag vill stoppa upp ett uppgrag</a>
                                 </div>
                                 <div class="col-4">
                                     <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
@@ -219,7 +219,7 @@ function ChoicesBoxDuplicater() {
         document.getElementById('choiceDuplicater' + (i - 1)), // Parent (previous clone or original)
         
         document.getElementById('choiceDuplicater' + i),
-        {path:'grid', startSocket: 'bottom', endSocket: 'top', color: '#327117', size: 4, outline: true, outlineColor: '#327117', outlineSize: '8', dropShadow: true},
+        {path:'grid', startSocket: 'bottom', endSocket: 'top', color: '#327117', size: 4, outline: false, outlineSize: 0.02, outlineColor: '#000000FF', dropShadow: true, },
     );
 }
 
