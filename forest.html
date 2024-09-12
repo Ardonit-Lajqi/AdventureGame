@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="CSS/forest.css">
     <title>Forest</title>
 </head>
-<body>
+<body class="custom-scrollbar">
     
 
     <source src="sound/512634__klankbeeld__calm-forest-april-nl-kampina-01-200401_0141.flac" type="audio/ogg">
@@ -74,11 +74,7 @@
                     <!--Text Logs-->
                     <div class="container">
                         <div class="card text-logs mt-4 text-light shadow overflow-auto custom-scrollbar p-2">
-                            <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
-                            <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
-                            <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
-                            <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
-                            <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
+                            <p id="textLog"></p>
                             <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
                             <p class="">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
                         </div>
@@ -144,27 +140,32 @@
 
             <!--What To Do (choices)-->
         <div class="col-8">
-            <div class="card card-question shadow mt-5">
-                <h1 class="text-center text-light mt-2" id="storyLine">Vad Gör Du?</h1>
-                <div class="row text-center mt-3">
-                    <div class="col-4 mb-5">
-                        <a class="btn choices text-light" href="">text</a>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-question shadow mt-5 p-2" id="choiceDuplicater">
+                        <h1 class="text-center text-light mt-2">What do you do?</h1>
+                        <div class="row text-center mt-3">
+                            <div class="col-4 mb-3" id="choices">
+                                <a class="btn choices text-light" onclick="ChoicesBoxDuplicater()">Jag vill stoppa upp ett uppgrag</a>
+                            </div>
+                            <div class="col-4">
+                                <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
+                            </div>
+                            <div class="col-4">
+                                <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
+                            </div>
+                            <div class="col-4">
+                                <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
+                            </div>
+                            <div class="col-4">
+                                <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
+                            </div>
+                            <div class="col-4">
+                                <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-4">
-                        <a class="btn choices text-light" href="">text</a>
-                    </div>
-                    <div class="col-4">
-                        <a class="btn choices text-light" href="">text</a>
-                    </div>
-                    <div class="col-4">
-                        <a class="btn choices text-light" href="">text</a>
-                    </div>
-                    <div class="col-4">
-                        <a class="btn choices text-light" href="">text</a>
-                    </div>
-                    <div class="col-4">
-                        <a class="btn choices text-light" href="">text</a>
-                    </div>
+                    <canvas id="c" width="500" height="500"></canvas>
                 </div>
             </div>
         </div>
@@ -189,8 +190,7 @@
         </div>
       </div>
 
-      <div id="google_translate_element" style="display: none;"></div>
-
+      <script src="script/forestChoices.js"></script>
       <script src="script/main.js"></script>
       <script src="script/sounds.js"></script>
 </body>
