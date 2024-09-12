@@ -146,7 +146,7 @@
                             <h1 class="text-center text-light mt-2">What do you do?</h1>
                             <div class="row text-center mt-3">
                                 <div class="col-4 mb-3" id="choices">
-                                    <a class="btn choices text-light" onclick="ChoicesBoxDuplicater(); this.onclick = null; ">Jag vill stoppa upp ett uppgrag</a>
+                                    <a class="btn choices text-light" onclick="ChoicesBoxDuplicater(); this.onclick = null;">Jag vill stoppa upp ett uppgrag</a>
                                 </div>
                                 <div class="col-4">
                                     <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
@@ -213,6 +213,11 @@ function ChoicesBoxDuplicater() {
     clone.style.marginBottom = "10vh";
     clone.style.width = "55vh";
     clone.style.marginLeft = randomMarginLeft + "vh";
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+    });
 
     // Draw the LeaderLine connecting the previous clone (or original) to the new one
     new LeaderLine(
