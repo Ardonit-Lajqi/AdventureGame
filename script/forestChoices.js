@@ -21,8 +21,7 @@ function ChoicesBox(){
 }
 */
 
-let i = 0;
-
+/*let i = 0;
 function ChoicesBoxDuplicater() {
     const node = document.getElementById("choiceDuplicater");
     const clone = node.cloneNode(true); // Clone the #demo div and its contents
@@ -39,3 +38,4 @@ function ChoicesBoxDuplicater() {
 
     console.log(react.x, react.y);
 }
+*/
