@@ -217,7 +217,9 @@ function ChoicesBoxDuplicater() {
     // Draw the LeaderLine connecting the previous clone (or original) to the new one
     new LeaderLine(
         document.getElementById('choiceDuplicater' + (i - 1)), // Parent (previous clone or original)
-        document.getElementById('choiceDuplicater' + i)        // Child (new clone)
+        
+        document.getElementById('choiceDuplicater' + i),
+        {path:'grid', startSocket: 'bottom', endSocket: 'top', color: '#327117', size: 4, outline: true, outlineColor: '#327117', outlineSize: '8', dropShadow: true},
     );
 }
 
