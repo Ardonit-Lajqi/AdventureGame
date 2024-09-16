@@ -75,8 +75,11 @@ body{
     margin-bottom: 5vh;
 }
 
+
 .choices{
-    background-color: #2B5917;
+    background-color: #2B5917;  /* Ensure no background color */
+    font-family: "Handjet", sans-serif;
+    letter-spacing: 2px;
 }
 
 .modal-content{
