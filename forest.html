@@ -144,25 +144,8 @@
                     <div class="col-12">
                         <div class="card card-question shadow mt-5 p-2" id="choiceDuplicater0">
                             <h1 class="text-center text-light mt-2">What do you do?</h1>
-                            <div class="row text-center mt-3">
-                                <div class="col-4 mb-3" id="choices">
-                                    <a class="btn choices text-light" onclick="ChoicesBoxDuplicater(); this.onclick = null;">Jag vill stoppa upp ett uppgrag</a>
-                                </div>
-                                <div class="col-4">
-                                    <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
-                                </div>
-                                <div class="col-4" id="end">
-                                    <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
-                                </div>
-                                <div class="col-4">
-                                    <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
-                                </div>
-                                <div class="col-4">
-                                    <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
-                                </div>
-                                <div class="col-4">
-                                    <a class="btn choices text-light" href="">Jag vill stoppa upp ett uppgrag</a>
-                                </div>
+                            <div class="row text-center mt-3" id="choices">
+
                             </div>
                         </div>
                         <!-- Canvas for drawing arrows -->
@@ -198,18 +181,28 @@
 
       <script>
 
-let i = 0;
-function ChoicesBoxDuplicater() {
-    const originalNode = document.getElementById("choiceDuplicater0"); // The original element
-    const clone = originalNode.cloneNode(true); // Clone the original element
-    document.body.appendChild(clone);   // Append the clone to the body
-    
-    clone.id = "choiceDuplicater" + ++i; // Update the clone's ID
+import { choicesDiv } from './script/forestChoices.js';
 
-    // Random position for the clone
+let i = 0;
+
+function ChoicesBoxDuplicater() {
+    const originalNode = document.getElementById("choiceDuplicater0");
+    if (!originalNode) {
+        console.error("Original node not found.");
+        return;
+    }
+
+    while (choicesDiv.hasChildNodes()) {
+        choicesDiv.removeChild(choicesDiv.firstChild);
+    }
+
+    const clone = originalNode.cloneNode(true);
+    document.body.appendChild(clone);
+
+    clone.id = "choiceDuplicater" + ++i;
+
     const randomMarginLeft = Math.floor(Math.random() * 90) + 20;
 
-    // Style the clone
     clone.style.marginBottom = "10vh";
     clone.style.width = "55vh";
     clone.style.marginLeft = randomMarginLeft + "vh";
@@ -219,15 +212,24 @@ function ChoicesBoxDuplicater() {
         behavior: 'smooth'
     });
 
-    // Draw the LeaderLine connecting the previous clone (or original) to the new one
-    new LeaderLine(
-        document.getElementById('choiceDuplicater' + (i - 1)), // Parent (previous clone or original)
-        
-        document.getElementById('choiceDuplicater' + i),
-        {path:'grid', startSocket: 'bottom', endSocket: 'top', color: '#327117', size: 4, outline: false, outlineSize: 0.02, outlineColor: '#000000FF', dropShadow: true, },
-    );
+    if (i > 0) {
+        new LeaderLine(
+            document.getElementById('choiceDuplicater' + (i - 1)),
+            document.getElementById('choiceDuplicater' + i),
+            {path: 'grid', startSocket: 'bottom', endSocket: 'top', color: '#327117', size: 4, outline: false, outlineSize: 0.02, outlineColor: '#000000FF', dropShadow: true}
+        );
+    }
+
+    for (let index = 0; index < 6; index++) {
+        CreateButton();
+    }
 }
 
+window.onload = function() {
+    for (let index = 0; index < 6; index++) {
+        CreateButton();
+    }
+};
       </script>
 </body>
 </html>
