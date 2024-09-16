@@ -18,3 +18,22 @@ const storyNode = {
         ]
     }
 };
+
+
+function CreateButton() {
+    const btn = document.createElement("button");
+    btn.className = 'btn choices text-light';
+    btn.innerHTML = 'Jag vill stoppa upp ett uppgrag';
+    btn.onclick = function() {
+        ChoicesBoxDuplicater();
+        this.onclick = null;
+    };
+
+    const div = document.createElement("div");
+    div.className = 'col-4 mb-3';
+    div.appendChild(btn);
+
+    choicesDiv.appendChild(div);
+}
+
+export {choicesDiv};
