@@ -177,53 +177,12 @@
       <script src="script/forestChoices.js" type="module"></script>
       <script src="script/main.js"></script>
       <script src="script/sounds.js"></script>
-      <script src="library/anseki-leader-line-6c26a9d/leader-line.min.js"></script>
+      <script src="library/anseki-leader-line-6c26a9d/leader-line.min.js "></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leader-line/1.0.7/leader-line.min.js"></script>
 
       <script type="module">
+import { CreateButton } from "/script/forestChoices.js";
 
-import { choicesDiv } from './script/forestChoices.js';
-
-let i = 0;
-
-function ChoicesBoxDuplicater() {
-    const originalNode = document.getElementById("choiceDuplicater0");
-    if (!originalNode) {
-        console.error("Original node not found.");
-        return;
-    }
-
-    while (choicesDiv.hasChildNodes()) {
-        choicesDiv.removeChild(choicesDiv.firstChild);
-    }
-
-    const clone = originalNode.cloneNode(true);
-    document.body.appendChild(clone);
-
-    clone.id = "choiceDuplicater" + ++i;
-
-    const randomMarginLeft = Math.floor(Math.random() * 90) + 20;
-
-    clone.style.marginBottom = "10vh";
-    clone.style.width = "55vh";
-    clone.style.marginLeft = randomMarginLeft + "vh";
-
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
-
-    if (i > 0) {
-        new LeaderLine(
-            document.getElementById('choiceDuplicater' + (i - 1)),
-            document.getElementById('choiceDuplicater' + i),
-            {path: 'grid', startSocket: 'bottom', endSocket: 'top', color: '#327117', size: 4, outline: false, outlineSize: 0.02, outlineColor: '#000000FF', dropShadow: true}
-        );
-    }
-
-    for (let index = 0; index < 6; index++) {
-        CreateButton();
-    }
-}
 
 window.onload = function() {
     for (let index = 0; index < 6; index++) {
