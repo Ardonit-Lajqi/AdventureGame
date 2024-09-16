@@ -76,9 +76,10 @@ body{
 }
 
 
-.choices{
+.button{
     background-color: #2B5917;  /* Ensure no background color */
     font-family: "Handjet", sans-serif;
+    color: white;
     letter-spacing: 2px;
 }
 
