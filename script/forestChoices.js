@@ -33,6 +33,7 @@ function CreateButton() {
     div.className = 'col-4 mb-3';
     div.appendChild(btn);
 
+    let choicesDiv = document.getElementById("choices");
     choicesDiv.appendChild(div);
 }
 
