@@ -8,12 +8,26 @@ const storyNode = {
             { text: "Deeper Forest", next: "startDeepForest" }
         ]
     },
+
     hut: {
         text: "You arrive at a small, abandoned hut.",
         question: "What do you want to do?",
         choices: [
-            { text: "Enter the hut", next: "enterHut" },
-            { text: "Look around", next: "lookAround" }
+            { text: "Leave", next: "leave" },
+            { text: "Open the door", next: "openDoor" },
+            { text: "Knock on the door", next: "knockOnDoor" },
+            { text: "Peek through window", next: "peekThroughWindow" }
+        ]
+    },
+
+    openDoor: {
+        text: "You attempt to open the door.",
+        question: "What do you want to do?",
+        choices: [
+            { text: "Leave", next: "leave" },
+            { text: "Open the door", next: "openDoor" },
+            { text: "Knock on the door", next: "knockOnDoor" },
+            { text: "Peek through window", next: "peekThroughWindow" }
         ]
     },
 };
