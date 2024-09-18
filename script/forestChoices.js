@@ -1,3 +1,8 @@
+import * as main from './main.js';
+main.setStamina(10);
+main.setHealth(10);
+main.setMana(10);
+
 let storyNode = {
     start: {
         text: "You find yourself in a thick forest.",
@@ -35,6 +40,13 @@ let storyNode = {
             { text: "Leave", next: "leave" },
         ]
     },
+    dead: {
+        text: "You died",
+        question: "You are dead",
+        choices: [
+            { text: "Restart", next: "restart" },
+        ]
+    },
 };
 
 let monsterInHut = true;
@@ -43,7 +55,6 @@ let haveShoes = true;
 let isDead = false;
 
 let containerCount = 0;
-
 // Ensure the story node is created on window load
 window.onload = function() {
     createStoryContainer('start');
@@ -138,18 +149,19 @@ function handleSpecialActions(choice) {
                     if (haveShoes) {
                         rand = Math.floor(Math.random() * 100);
                         if (rand >= 50) {
+                            main.setStamina(main.stamina - 1);
                             warningCard();
                             nextNode = "escapedMonster";
                         } else {
                             isDead = true;
                             warningCard();
                             updateStoryLog("The monster caught you.");
-                            return; // Stop further progression
+                            nextNode = "dead";
                         }
                     } else {
                         isDead = true;
                         updateStoryLog("You slip and are caught by the monster.");
-                        return; // Stop further progression
+                        nextNode = "dead";
                     }
                 } else {
                     nextNode = "inHut";
@@ -169,7 +181,7 @@ function handleSpecialActions(choice) {
                             } else {
                                 isDead = true;
                                 updateStoryLog("You slip and are caught by the monster.");
-                                return; // Stop further progression
+                                nextNode = "dead";
                             }
                         } else {
                             rand = Math.floor(Math.random() * 100);
@@ -178,7 +190,7 @@ function handleSpecialActions(choice) {
                             } else {
                                 isDead = true;
                                 updateStoryLog("You slip and are caught by the monster.");
-                                return; // Stop further progression
+                                nextNode = "dead";
                             }
                         }
                     }
@@ -191,9 +203,7 @@ function handleSpecialActions(choice) {
     }
 
     // Proceed to the next story node if the player is not dead
-    if (!isDead) {
-        createStoryContainer(nextNode);
-    }
+    createStoryContainer(nextNode);
 }
 
 function warningCard() {
@@ -218,6 +228,14 @@ function disableButtons(container, clickedButton) {
 
 function updateStoryLog(storyText) {
     const logContainer = document.getElementById('text-log');
+
+    // Add the 'old-logs' class to all previous logs
+    const oldLogs = logContainer.querySelectorAll('p.story-log');
+    oldLogs.forEach(log => {
+        log.classList.add('old-logs');
+    });
+
+    // Create and append the new log entry
     const logEntry = document.createElement('p');
     logEntry.classList.add('story-log');
     logContainer.appendChild(logEntry); // Append the paragraph before typing
@@ -228,6 +246,7 @@ function updateStoryLog(storyText) {
 
     logContainer.scrollTop = logContainer.scrollHeight;
 }
+
 
 function typeWriter(txt, speed, p, logEntry) {
     // Base case: If all characters have been printed, stop recursion
