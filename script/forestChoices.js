@@ -22,6 +22,11 @@ const storyNode = {
 
     openDoor: {
         text: "You attempt to open the door.",
+        if (monsterInHut) {
+            
+        } else {
+            
+        },
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leave" },
@@ -31,6 +36,10 @@ const storyNode = {
         ]
     },
 };
+
+let monsterInHut = true;
+let monsterDead = false;
+let haveShoes = true;
 
 let containerCount = 0;
 
