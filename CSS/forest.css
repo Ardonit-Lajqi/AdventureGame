@@ -75,8 +75,15 @@ body {
     margin-bottom: 6vh;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 15px;
 }
+.warning {
+    border: 3px solid #A1142D;
+    color: #A1142D;
+    font-size: 36px;
+    font-weight: bold;
+    font-family: sans-serif;
+}
+
 
 .button {
     background-color: #2B5917;
