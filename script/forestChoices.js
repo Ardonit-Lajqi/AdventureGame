@@ -1,9 +1,9 @@
-const storyNode = {
+let storyNode = {
     start: {
         text: "You find yourself in a thick forest.",
         question: "Where do you want to go?",
         choices: [
-            { text: "Hut", next: "hut" },
+            { text: "Hut", next: "hut"},
             { text: "Continue Forward", next: "OutsideCity" },
             { text: "Deeper Forest", next: "startDeepForest" }
         ]
@@ -14,25 +14,25 @@ const storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leave" },
-            { text: "Open the door", next: "openDoor" },
-            { text: "Knock on the door", next: "knockOnDoor" },
-            { text: "Peek through window", next: "peekThroughWindow" }
+            { text: "Open the door", specialAction: true },
+            { text: "Knock on the door", specialAction: true },
+            { text: "Peek through window", next: "peekThroughWindow", specialAction: true }
         ]
     },
 
-    openDoor: {
-        text: "You attempt to open the door.",
-        if (monsterInHut) {
-            
-        } else {
-            
-        },
+    inHut: {
+        text: "You enter the hut.",
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leave" },
-            { text: "Open the door", next: "openDoor" },
-            { text: "Knock on the door", next: "knockOnDoor" },
-            { text: "Peek through window", next: "peekThroughWindow" }
+        ]
+    },
+
+    escapedMonster: {
+        text: "You managed to escape the monster.",
+        question: "What do you want to do?",
+        choices: [
+            { text: "Leave", next: "leave" },
         ]
     },
 };
@@ -40,21 +40,32 @@ const storyNode = {
 let monsterInHut = true;
 let monsterDead = false;
 let haveShoes = true;
+let isDead = false;
 
 let containerCount = 0;
 
-function createStoryContainer(storyNodeKey) {
-    const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
-    const randomWidth = Math.floor(Math.random() * 15) + 40;
+// Ensure the story node is created on window load
+window.onload = function() {
+    createStoryContainer('start');
+}
 
+function createStoryContainer(storyNodeKey) {
+    // Check if the story node exists and is valid
+    if (!storyNode[storyNodeKey]) {
+        console.error(`Story node "${storyNodeKey}" does not exist.`);
+        return;
+    }
+
+    console.log(`Creating container for: ${storyNodeKey}`);
+
+    const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
 
     const container = document.createElement('div');
-    container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-2');
+    container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
     container.id = "card" + containerCount;
 
-
     container.style.marginLeft = randomMarginLeft + "vh";
-    container.style.width = randomWidth + "vh";
+    container.style.width = "50vh";
     container.style.transform = `translateX(${randomMarginLeft}vh)`;
 
     const questionTitle = document.createElement('h2');
@@ -75,8 +86,15 @@ function createStoryContainer(storyNodeKey) {
 
         button.addEventListener('click', function () {
             disableButtons(container, button);
-            createStoryContainer(choice.next);
+        
+            // If the choice has a special action, handle it
+            if (choice.specialAction) {
+                handleSpecialActions(choice); // handleSpecialActions will take care of calling createStoryContainer
+            } else {
+                createStoryContainer(choice.next); // If no special action, proceed to the next node
+            }
         });
+        
 
         const buttonCol = document.createElement('div');
         buttonCol.classList.add('col-4');
@@ -105,6 +123,87 @@ function createStoryContainer(storyNodeKey) {
     containerCount++;
 }
 
+function handleSpecialActions(choice) {
+    let nextNode = choice.next; // Ensure nextNode is initialized with the default next node
+    
+    // Check if the choice has a "specialAction" property
+    if (choice.specialAction) {
+        console.log("Special action triggered for:", choice.text);
+        let rand = Math.floor(Math.random() * 100);
+        // Special action for "Open the door"
+        switch (choice.text) {
+            case "Open the door":
+                console.log(choice.text);
+                if (monsterInHut) {
+                    if (haveShoes) {
+                        rand = Math.floor(Math.random() * 100);
+                        if (rand >= 50) {
+                            warningCard();
+                            nextNode = "escapedMonster";
+                        } else {
+                            isDead = true;
+                            warningCard();
+                            updateStoryLog("The monster caught you.");
+                            return; // Stop further progression
+                        }
+                    } else {
+                        isDead = true;
+                        updateStoryLog("You slip and are caught by the monster.");
+                        return; // Stop further progression
+                    }
+                } else {
+                    nextNode = "inHut";
+                }
+                break;
+            case "Knock on the door":
+                if (monsterInHut) {
+                    rand = Math.floor(Math.random() * 100);
+                    if (rand >= 50) {
+                        updateStoryLog("You hear a growl from inside. The monster doesn't seem to notice you.");
+                        nextNode = "hut";
+                    } else {
+                        if (haveShoes) {
+                            rand = Math.floor(Math.random() * 100);
+                            if (rand >= 20) {
+                                nextNode = "escapedMonster";
+                            } else {
+                                isDead = true;
+                                updateStoryLog("You slip and are caught by the monster.");
+                                return; // Stop further progression
+                            }
+                        } else {
+                            rand = Math.floor(Math.random() * 100);
+                            if (rand >= 50) {
+                                nextNode = "escapedMonster";
+                            } else {
+                                isDead = true;
+                                updateStoryLog("You slip and are caught by the monster.");
+                                return; // Stop further progression
+                            }
+                        }
+                    }
+                } else {
+                    console.log("with no response from inside, you enter.");
+                    nextNode = "inHut";  
+                }
+                break;
+        }
+    }
+
+    // Proceed to the next story node if the player is not dead
+    if (!isDead) {
+        createStoryContainer(nextNode);
+    }
+}
+
+function warningCard() {
+    let previusCard = document.getElementById('card' + (containerCount - 1));
+    previusCard.classList.add("warning");
+    previusCard.innerHTML += 
+    '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
+}
+
+
 function disableButtons(container, clickedButton) {
     const buttons = container.querySelectorAll('button');
     buttons.forEach(button => {
@@ -118,16 +217,27 @@ function disableButtons(container, clickedButton) {
 }
 
 function updateStoryLog(storyText) {
-    const logContainer = document.getElementById('text-log', 'mt-4', 'text-light', 'shadow', 'overflow-auto', 'custom-scrollbar');
+    const logContainer = document.getElementById('text-log');
     const logEntry = document.createElement('p');
     logEntry.classList.add('story-log');
-    logEntry.innerHTML = storyText;
-    logContainer.appendChild(logEntry);
+    logContainer.appendChild(logEntry); // Append the paragraph before typing
+
+    let speed = 30; // Speed in milliseconds
+    let p = 0; // Starting point for the text
+    typeWriter(storyText, speed, p, logEntry);
+
     logContainer.scrollTop = logContainer.scrollHeight;
 }
 
-function OldLogs(storyText){
-    
-}
+function typeWriter(txt, speed, p, logEntry) {
+    // Base case: If all characters have been printed, stop recursion
+    if (p < txt.length) {
+        logEntry.innerHTML += txt.charAt(p); // Add one character to the text
+        p++;
 
-createStoryContainer('start');
+        // Use setTimeout to control the speed of typing
+        setTimeout(function () {
+            typeWriter(txt, speed, p, logEntry); // Recursive call
+        }, speed);
+    }
+}
