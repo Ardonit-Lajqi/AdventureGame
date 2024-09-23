@@ -43,7 +43,7 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leave" },
-            { text: "Return to fight monster", next: "fightMonster" }
+            { text: "Return to fight monster", specialAction: true }
         ]
     },
 
