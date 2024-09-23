@@ -1,5 +1,5 @@
 import * as main from './main.js';
-import { storyNode } from './forestStory.js'; // Importing from forestStory.js
+import { storyNode } from './forestStory.js';
 
 main.setStamina(10);
 main.setHealth(10);
@@ -13,10 +13,28 @@ let containerCount = 0;
 let monsterInHut = false;
 let monsterDead = false;
 let haveShoes = true;
+let trapdoorBroken = false;
+let haveRope = false;
 
-// Ensure the story node is created on window load
 window.onload = function() {
     createStoryContainer('start');
+    setupInventoryListeners();
+}
+
+function setupInventoryListeners() {
+    const items = [
+        { id: 'sword', text: 'You have a sword!' },
+        { id: 'spellbook', text: 'You have a spellbook!' },
+        { id: 'rope', text: 'You have a rope!' },
+        // Add more items as needed
+    ];
+
+    items.forEach(item => {
+        const img = document.getElementById(item.id);
+        img.addEventListener('click', function() {
+            updateStoryLog(item.text);
+        });
+    });
 }
 
 function createStoryContainer(storyNodeKey) {
@@ -41,7 +59,6 @@ function createStoryContainer(storyNodeKey) {
     questionTitle.innerHTML = storyNode[storyNodeKey].question;
     container.appendChild(questionTitle);
 
-    // Add a callback to proceed after the story log update and delay
     updateStoryLog(storyNode[storyNodeKey].text, function() {
         const buttonContainer = document.createElement('div');
         buttonContainer.classList.add('row', 'text-center', 'mt-3');
@@ -55,7 +72,6 @@ function createStoryContainer(storyNodeKey) {
             button.addEventListener('click', function () {
                 disableButtons(container, button);
 
-                // If the choice has a special action, handle it
                 if (choice.specialAction) {
                     handleSpecialActions(choice);
                 } else {
@@ -92,13 +108,11 @@ function createStoryContainer(storyNodeKey) {
 }
 
 function handleSpecialActions(choice) {
-    let nextNode = choice.next; // Ensure nextNode is initialized with the default next node
+    let nextNode = choice.next;
     
-    // Check if the choice has a "specialAction" property
     if (choice.specialAction) {
         console.log("Special action triggered for:", choice.text);
         let rand = Math.floor(Math.random() * 100);
-        // Special action for "Open the door"
         switch (choice.text) {
             case "Open the door":
                 console.log(choice.text);
@@ -160,43 +174,40 @@ function handleSpecialActions(choice) {
                 if (monsterInHut) {
                     warningCard();
 
-                    // First log: monster sight
                     updateStoryLog("You see the monster through the window.", function() {
-                        // Delay after the first log
                         setTimeout(function() {
-                            // Second log: consequences of peeking
                             rand = Math.floor(Math.random() * 100);
                             if (rand >= 5) {
                                 updateStoryLog("As you see the monster you slip away unnoticed.", function() {
                                     nextNode = "escapedMonster";
-                                    createStoryContainer(nextNode); // Proceed after second log
+                                    createStoryContainer(nextNode);
                                 });
                             } else {
                                 isDead = true;
                                 updateStoryLog("As you peek through the window the monster rushes to attack you.", function() {
                                     nextNode = "dead";
-                                    createStoryContainer(nextNode); // Proceed after second log
+                                    createStoryContainer(nextNode);
                                 });
                             }
-                        }, 250); // 1-second delay between the two logs
+                        }, 250);
                     });
                 } else {
                     updateStoryLog("You see nothing noteworthy inside.", function() {
                         nextNode = "hut";
-                        createStoryContainer(nextNode); // Proceed after single log
+                        createStoryContainer(nextNode);
                     });
                 }
                 break;
-            case "Search":
+            case "Search hut":
                 if (!searchedHut) {
                     searchedHut = true;
                     updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
                         nextNode = "trapdoor";
-                        createStoryContainer(nextNode); // Proceed to the next node after the texts are done
+                        createStoryContainer(nextNode);
                     });
                 } else {
                     nextNode = "trapdoor";
-                    createStoryContainer(nextNode); // Proceed immediately if searched
+                    createStoryContainer(nextNode);
                 }
                 break;
                 case "Enter":
@@ -206,23 +217,33 @@ function handleSpecialActions(choice) {
                             if (rand >= 50) {
                                 updateStoryLog("You successfully climb down.", function() {
                                     nextNode = "portal";
-                                    createStoryContainer(nextNode); // Proceed to the next story node
+                                    createStoryContainer(nextNode);
                                 });
                             } else {
                                 updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
                                     main.setHealth(main.health - 1);
                                     nextNode = "portal";
-                                    createStoryContainer(nextNode); // Proceed to the next story node
+                                    createStoryContainer(nextNode);
                                 });
                             }
-                        }); // Delay before executing the next action
+                        });
+                    });
+                    break;
+                case "Leave cricle":
+                    updateStoryLog("You go back to leave the through the trapdoor", function() {
+                        if (trapdoorBroken) {
+                            updateStoryLog("You relsize that you broke the ladder during your entry", function() {
+                                // click item rope
+                            });
+                        } else {
+
+                        }
                     });
                     break;
                 
         }
     }
 
-    // Proceed to the next story node if the player is not dead
     if (!isDead) {
         createStoryContainer(nextNode);
     }
@@ -254,40 +275,37 @@ function updateStoryLogQueue(textArray, callback) {
         if (index < textArray.length) {
             updateStoryLog(textArray[index], function() {
                 index++;
-                processNext(); // Continue with the next text after the current one finishes
+                processNext();
             });
         } else if (callback) {
-            callback(); // Proceed to next logic after all texts are done
+            callback();
         }
     }
 
-    processNext(); // Start the process
+    processNext();
 }
 
-let lastStoryLogTime = 0; // To track the timestamp of the last call
+let lastStoryLogTime = 0;
 
 function updateStoryLog(storyText, callback, speed = 30) {
     const logContainer = document.getElementById('text-log');
 
-    // Add the 'old-logs' class to all previous logs
     const oldLogs = logContainer.querySelectorAll('p.story-log');
     oldLogs.forEach(log => {
         log.classList.add('old-logs');
     });
 
-    // Create and append the new log entry
     const logEntry = document.createElement('p');
     logEntry.classList.add('story-log');
-    logContainer.appendChild(logEntry); // Append the paragraph before typing
+    logContainer.appendChild(logEntry);
 
-    let p = 0; // Starting point for the text
+    let p = 0;
     typeWriter(storyText, speed, p, logEntry, function() {
-        // Introduce a 200 ms delay after the text is fully typed
         setTimeout(() => {
             if (callback) {
-                callback(); // Continue after the delay
+                callback();
             }
-        }, 250); // Delay in milliseconds
+        }, 250);
     });
 
     logContainer.scrollTop = logContainer.scrollHeight;
@@ -296,13 +314,13 @@ function updateStoryLog(storyText, callback, speed = 30) {
 
 function typeWriter(txt, speed, p, logEntry, onComplete) {
     if (p < txt.length) {
-        logEntry.innerHTML += txt.charAt(p); // Add one character to the text
+        logEntry.innerHTML += txt.charAt(p);
         p++;
         setTimeout(function () {
-            typeWriter(txt, speed, p, logEntry, onComplete); // Recursive call
+            typeWriter(txt, speed, p, logEntry, onComplete);
         }, speed);
     } else if (onComplete) {
-        onComplete(); // Call onComplete once the typing is done
+        onComplete();
     }
 }
 
