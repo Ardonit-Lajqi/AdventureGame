@@ -10,7 +10,7 @@ main.setCoins(0);
 let isDead = false;
 let searchedHut = false;
 let containerCount = 0;
-let monsterInHut = false;
+let monsterInHut = true;
 let monsterDead = false;
 let haveShoes = true;
 let trapdoorBroken = false;
@@ -239,13 +239,85 @@ function handleSpecialActions(choice) {
                         }
                     });
                     break;
+                case "Return to fight monster":
+                    monsterBattle();
+                    break;
                 
         }
     }
 
-    if (!isDead) {
-        createStoryContainer(nextNode);
-    }
+    createStoryContainer(nextNode);
+}
+
+function monsterBattle() {
+    const fightCard = document.createElement("div");
+    fightCard.classList.add("fightCard")
+    fightCard.innerHTML = `
+        <div class="card fightScene shadow px-3 py-3">
+            <div class="row">
+                <div class="col-2">
+                    <div class="card monster-lvl">
+                        <h2 class="text-center text-light" id="lvl">lvl 12</h2>
+                    </div>
+                </div>
+                <div class="col-10">
+                    <div class="row align-items-center g-0 mb-2">
+                        <div class="col-auto">
+                            <div class="bg-dark progress-icon d-flex align-items-center justify-content-center" style="width: 25px;">
+                                <img src="img/icons/heart.png" alt="health" class="img-fluid">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="progress bg-dark" style="height: 25px;">
+                                <div class="progress-bar healthbar" role="progressbar" style="background-color: #A1142D; border: 2px solid black; width: 100%;" id="monsterHealth" aria-valuenow="10" aria-valuemin="0" aria-valuemax="10"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center g-0 mb-2">
+                        <div class="col-auto">
+                            <div class="bg-dark progress-icon d-flex align-items-center justify-content-center" style="width: 25px;">
+                                <img src="img/icons/lighting.png" alt="stamina" class="img-fluid">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="progress bg-dark" style="height: 25px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="border: 2px solid black; width: 100%;" id="monsterStamina" aria-valuenow="10" aria-valuemin="0" aria-valuemax="10"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <img src="img/startPage-img/forest.jpg" alt="monster" id="monsterImg">
+            </div>
+        </div>
+        
+        <div class="card card-option shadow mt-3 p-3">
+            <div class="row d-flex justify-content-center text-center">
+                <div class="col-6">
+                    <button class="btn btn-attack fs-2">
+                        <span><img src="img/icons/sword (3).png" alt="" style="width: 50px;" id="btnAttack"></span>ATTACK
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-flee fs-2">
+                        <span><img src="img/icons/running.png" alt="" style="width: 50px;" id="btnFlee"></span>FLEE
+                    </button>
+                </div>
+                <div class="col-6 mt-2">
+                    <button class="btn btn-block fs-2">
+                        <span><img src="img/icons/defence.png" alt="" style="width: 50px;" id="btnBlock"></span>BLOCK
+                    </button>
+                </div>
+                <div class="col-6 mt-2">
+                    <button class="btn btn-wait fs-2">
+                        <span><img src="img/icons/hourglass.png" alt="" style="width: 50px;" id="btnWait"></span>WAIT
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('game').appendChild(fightCard);
 }
 
 function warningCard() {
