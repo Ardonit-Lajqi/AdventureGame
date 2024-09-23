@@ -21,10 +21,20 @@ export let storyNode = {
     },
 
     inHut: {
-        text: "You enter the hut.",
+        text: "You find yourself inside the hut.",
         question: "What do you want to do?",
         choices: [
-            { text: "Leave", next: "leave" },
+            { text: "Leave", next: "leaveHut" },
+            { text: "Search", specialAction: true }
+        ]
+    },
+
+    trapdoor: {
+        text: "You find a trapdoor.",
+        question: "What do you want to do?",
+        choices: [
+            { text: "Leave", next: "inHut" },
+            { text: "Enter", specialAction: true }
         ]
     },
 
@@ -42,7 +52,26 @@ export let storyNode = {
         question: "Fight screen",
         choices: [
             { text: "Attack", next: "attack" },
-            { text: "Flee", next: "flee" }
+            { text: "Leave", next: "leaveHut" }
+        ]
+    },
+
+    leaveHut: {
+        text: "You leave the hut and continue forward.",
+        question: "What do you do",
+        choices: [
+            { text: "Walk", next: "walk" }
+        ]
+    },
+
+    portal: {
+        text: "You see a room with a demoic circle in the middle.",
+        question: "What do you want to do?",
+        choices: [
+            { text: "Leave", next: "leave" },
+            { text: "Open the door", specialAction: true },
+            { text: "Knock on the door", specialAction: true },
+            { text: "Peek through window", specialAction: true }
         ]
     },
 
@@ -55,6 +84,6 @@ export let storyNode = {
     },
 };
 
-export let monsterInHut = true;
+export let monsterInHut = false;
 export let monsterDead = false;
 export let haveShoes = true;
