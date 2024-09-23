@@ -8,6 +8,7 @@ main.setWanted(0);
 main.setCoins(0);
 
 let isDead = false;
+let searchedHut = false;
 let containerCount = 0;
 
 // Ensure the story node is created on window load
@@ -87,7 +88,6 @@ function createStoryContainer(storyNodeKey) {
     });
 }
 
-
 function handleSpecialActions(choice) {
     let nextNode = choice.next; // Ensure nextNode is initialized with the default next node
     
@@ -162,6 +162,7 @@ function handleSpecialActions(choice) {
                         // Delay after the first log
                         setTimeout(function() {
                             // Second log: consequences of peeking
+                            rand = Math.floor(Math.random() * 100);
                             if (rand >= 5) {
                                 updateStoryLog("As you see the monster you slip away unnoticed.", function() {
                                     nextNode = "escapedMonster";
@@ -183,17 +184,51 @@ function handleSpecialActions(choice) {
                     });
                 }
                 break;
+            case "Search":
+                if (!searchedHut) {
+                    searchedHut = true;
+                    updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
+                        nextNode = "trapdoor";
+                        createStoryContainer(nextNode); // Proceed to the next node after the texts are done
+                    });
+                } else {
+                    nextNode = "trapdoor";
+                    createStoryContainer(nextNode); // Proceed immediately if searched
+                }
+                break;
+                case "Enter":
+                    rand = Math.floor(Math.random() * 100);
+                    updateStoryLog("You attempt to climb down the rickety ladder.", function() {
+                        setTimeout(function() {
+                            if (rand >= 50) {
+                                updateStoryLog("You successfully climb down.", function() {
+                                    nextNode = "portal";
+                                    createStoryContainer(nextNode); // Proceed to the next story node
+                                });
+                            } else {
+                                updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
+                                    main.setHealth(main.health - 1);
+                                    nextNode = "portal";
+                                    createStoryContainer(nextNode); // Proceed to the next story node
+                                });
+                            }
+                        }, 250); // Delay before executing the next action
+                    });
+                    break;
+                
         }
     }
 
     // Proceed to the next story node if the player is not dead
-    createStoryContainer(nextNode);
+    if (!isDead) {
+        createStoryContainer(nextNode);
+    }
 }
 
 function warningCard() {
-    let previusCard = document.getElementById('card' + (containerCount - 1));
-    previusCard.classList.add("warning");
-    previusCard.innerHTML += 
+    let previousCard = document.getElementById('card' + (containerCount - 1));
+    previousCard.classList.add("warning");
+    previousCard.innerHTML += 
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
 }
 
@@ -209,9 +244,26 @@ function disableButtons(container, clickedButton) {
     });
 }
 
+function updateStoryLogQueue(textArray, callback) {
+    let index = 0;
+
+    function processNext() {
+        if (index < textArray.length) {
+            updateStoryLog(textArray[index], function() {
+                index++;
+                processNext(); // Continue with the next text after the current one finishes
+            });
+        } else if (callback) {
+            callback(); // Proceed to next logic after all texts are done
+        }
+    }
+
+    processNext(); // Start the process
+}
+
 let lastStoryLogTime = 0; // To track the timestamp of the last call
 
-function updateStoryLog(storyText, callback) {
+function updateStoryLog(storyText, callback, speed = 30) {
     const logContainer = document.getElementById('text-log');
 
     // Add the 'old-logs' class to all previous logs
@@ -225,31 +277,19 @@ function updateStoryLog(storyText, callback) {
     logEntry.classList.add('story-log');
     logContainer.appendChild(logEntry); // Append the paragraph before typing
 
-    let speed = 30; // Speed in milliseconds
     let p = 0; // Starting point for the text
     typeWriter(storyText, speed, p, logEntry, function() {
-        // After the text is fully typed, handle consecutive call detection
-        const now = Date.now(); // Get current timestamp
-        const timeSinceLastLog = now - lastStoryLogTime;
-        lastStoryLogTime = now; // Update the last story log time
-
-        if (timeSinceLastLog < 500) {
-            // If the second call happens within 500ms, introduce a 1-second delay
-            setTimeout(() => {
-                if (callback) {
-                    callback(); // Continue after the 1-second delay
-                }
-            }, 250); // 1-second delay
-        } else {
-            // If it's not a consecutive call, continue immediately
+        // Introduce a 200 ms delay after the text is fully typed
+        setTimeout(() => {
             if (callback) {
-                callback();
+                callback(); // Continue after the delay
             }
-        }
+        }, 250); // Delay in milliseconds
     });
 
     logContainer.scrollTop = logContainer.scrollHeight;
 }
+
 
 function typeWriter(txt, speed, p, logEntry, onComplete) {
     if (p < txt.length) {
