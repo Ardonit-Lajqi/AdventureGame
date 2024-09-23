@@ -1,5 +1,5 @@
 import * as main from './main.js';
-import { storyNode, monsterInHut, monsterDead, haveShoes } from './forestStory.js'; // Importing from forestStory.js
+import { storyNode } from './forestStory.js'; // Importing from forestStory.js
 
 main.setStamina(10);
 main.setHealth(10);
@@ -10,6 +10,9 @@ main.setCoins(0);
 let isDead = false;
 let searchedHut = false;
 let containerCount = 0;
+let monsterInHut = false;
+let monsterDead = false;
+let haveShoes = true;
 
 // Ensure the story node is created on window load
 window.onload = function() {
@@ -302,3 +305,14 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
         onComplete(); // Call onComplete once the typing is done
     }
 }
+
+/*
+// Usage example
+updateStoryLog("You enter the dark forest, and hear rustling sounds.", function() {
+    updateStoryLog("Your heart races as you take a cautious step forward.", function() {
+        // Continue with the next actions here
+        console.log("Next action can proceed here.");
+    });
+});
+
+*/
