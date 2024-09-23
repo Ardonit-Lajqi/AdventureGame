@@ -1,62 +1,15 @@
 import * as main from './main.js';
+import { storyNode, monsterInHut, monsterDead, haveShoes } from './forestStory.js'; // Importing from forestStory.js
+
 main.setStamina(10);
 main.setHealth(10);
 main.setMana(10);
 main.setWanted(0);
 main.setCoins(0);
 
-let storyNode = {
-    start: {
-        text: "You find yourself in a thick forest.",
-        question: "Where do you want to go?",
-        choices: [
-            { text: "Hut", next: "hut"},
-            { text: "Continue Forward", next: "OutsideCity" },
-            { text: "Deeper Forest", next: "startDeepForest" }
-        ]
-    },
-
-    hut: {
-        text: "You arrive at a small, abandoned hut.",
-        question: "What do you want to do?",
-        choices: [
-            { text: "Leave", next: "leave" },
-            { text: "Open the door", specialAction: true },
-            { text: "Knock on the door", specialAction: true },
-            { text: "Peek through window", next: "peekThroughWindow", specialAction: true }
-        ]
-    },
-
-    inHut: {
-        text: "You enter the hut.",
-        question: "What do you want to do?",
-        choices: [
-            { text: "Leave", next: "leave" },
-        ]
-    },
-
-    escapedMonster: {
-        text: "You managed to escape the monster.",
-        question: "What do you want to do?",
-        choices: [
-            { text: "Leave", next: "leave" },
-        ]
-    },
-    dead: {
-        text: "You died",
-        question: "You are dead",
-        choices: [
-            { text: "Restart", next: "restart" },
-        ]
-    },
-};
-
-let monsterInHut = true;
-let monsterDead = false;
-let haveShoes = true;
 let isDead = false;
-
 let containerCount = 0;
+
 // Ensure the story node is created on window load
 window.onload = function() {
     createStoryContainer('start');
@@ -108,7 +61,6 @@ function createStoryContainer(storyNodeKey) {
             }
         });
         
-
         const buttonCol = document.createElement('div');
         buttonCol.classList.add('col-4');
         buttonCol.appendChild(button);
@@ -201,6 +153,24 @@ function handleSpecialActions(choice) {
                     nextNode = "inHut";  
                 }
                 break;
+            case "Peek through window":
+                if (monsterInHut) {
+                    warningCard();
+                    // play spooky sound, picture of monster
+                    rand = Math.floor(Math.random() * 100);
+                    if (rand >= 5) {
+                        updateStoryLog("As you see the monster you slip away unnoticed.");
+                        nextNode = "escapedMonster";
+                    } else {
+                        isDead = true;
+                        updateStoryLog("As you peek through the window the monster rushes to attack you.");
+                        nextNode = "dead";
+                    }
+                } else {
+                    updateStoryLog("You see nothing noteworthy inside.");
+                    nextNode = "hut";
+                }
+                break;
         }
     }
 
@@ -214,7 +184,6 @@ function warningCard() {
     previusCard.innerHTML += 
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
 }
-
 
 function disableButtons(container, clickedButton) {
     const buttons = container.querySelectorAll('button');
@@ -248,7 +217,6 @@ function updateStoryLog(storyText) {
 
     logContainer.scrollTop = logContainer.scrollHeight;
 }
-
 
 function typeWriter(txt, speed, p, logEntry) {
     // Base case: If all characters have been printed, stop recursion
