@@ -68,10 +68,9 @@ export let storyNode = {
         text: "You see a room with a demoic circle in the middle.",
         question: "What do you want to do?",
         choices: [
-            { text: "Leave", next: "leave" },
-            { text: "Open the door", specialAction: true },
-            { text: "Knock on the door", specialAction: true },
-            { text: "Peek through window", specialAction: true }
+            { text: "Leave cricle", specialAction: true },
+            { text: "Search", specialAction: true },
+            { text: "Summon", specialAction: true }
         ]
     },
 
@@ -84,6 +83,3 @@ export let storyNode = {
     },
 };
 
-export let monsterInHut = false;
-export let monsterDead = false;
-export let haveShoes = true;
