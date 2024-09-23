@@ -166,9 +166,6 @@ function createStoryContainer(storyNodeKey, containerNumber = null) {
             );
         }
         
-<<<<<<< HEAD
-        containerCount++;
-=======
         // Save the created container to localStorage
         let savedContainer = {
             id: container.id,
@@ -183,7 +180,6 @@ function createStoryContainer(storyNodeKey, containerNumber = null) {
         if (containerNumber === null) {
             containerCount++;
         }
->>>>>>> 357ea74b23e38cabcc83ddb1a42518ae148be23b
     });
 }
 
