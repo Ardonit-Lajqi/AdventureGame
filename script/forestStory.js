@@ -25,7 +25,7 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leaveHut" },
-            { text: "Search", specialAction: true }
+            { text: "Search hut", specialAction: true }
         ]
     },
 
@@ -69,7 +69,7 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave cricle", specialAction: true },
-            { text: "Search", specialAction: true },
+            { text: "Search cirle", specialAction: true },
             { text: "Summon", specialAction: true }
         ]
     },
