@@ -2,6 +2,8 @@ import * as main from './main.js';
 main.setStamina(10);
 main.setHealth(10);
 main.setMana(10);
+main.setWanted(0);
+main.setCoins(0);
 
 let storyNode = {
     start: {
