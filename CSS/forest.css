@@ -77,10 +77,11 @@ body {
     height: auto;
     background-color: #327117;
     transform: translateX(30vh);
-    margin-bottom: 6vh;
+    margin-bottom: 8vh;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
 .warning {
     border: 3px solid #A1142D;
     color: #A1142D;
@@ -125,6 +126,10 @@ body {
 
 .btn-close {
     background-color: #6F584B;
+}
+
+.fightCard{
+    transform: translateX(23vh);
 }
 
 .fightScene{
