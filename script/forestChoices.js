@@ -125,13 +125,17 @@ function handleSpecialActions(choice) {
                         } else {
                             isDead = true;
                             warningCard();
-                            updateStoryLog("The monster caught you.");
-                            nextNode = "dead";
+                            updateStoryLog("The monster caught you.", function() {
+                                nextNode = "dead";
+                                createStoryContainer(nextNode);
+                            });
                         }
                     } else {
                         isDead = true;
-                        updateStoryLog("You slip and are caught by the monster.");
-                        nextNode = "dead";
+                        updateStoryLog("You slip and are caught by the monster.", function() {
+                            nextNode = "dead";
+                            createStoryContainer(nextNode);
+                        });
                     }
                 } else {
                     nextNode = "inHut";
@@ -141,8 +145,10 @@ function handleSpecialActions(choice) {
                 if (monsterInHut) {
                     rand = Math.floor(Math.random() * 100);
                     if (rand >= 50) {
-                        updateStoryLog("You hear a growl from inside. The monster doesn't seem to notice you.");
-                        nextNode = "hut";
+                        updateStoryLog("You hear a growl from inside. The monster doesn't seem to notice you.", function() {
+                            nextNode = "hut";
+                            createStoryContainer(nextNode);
+                        });
                     } else {
                         if (haveShoes) {
                             rand = Math.floor(Math.random() * 100);
@@ -150,8 +156,10 @@ function handleSpecialActions(choice) {
                                 nextNode = "escapedMonster";
                             } else {
                                 isDead = true;
-                                updateStoryLog("You slip and are caught by the monster.");
-                                nextNode = "dead";
+                                updateStoryLog("You slip and are caught by the monster.", function() {
+                                    nextNode = "dead";
+                                    createStoryContainer(nextNode);
+                                });
                             }
                         } else {
                             rand = Math.floor(Math.random() * 100);
@@ -159,14 +167,18 @@ function handleSpecialActions(choice) {
                                 nextNode = "escapedMonster";
                             } else {
                                 isDead = true;
-                                updateStoryLog("You slip and are caught by the monster.");
-                                nextNode = "dead";
+                                updateStoryLog("You slip and are caught by the monster.", function() {
+                                    nextNode = "dead";
+                                    createStoryContainer(nextNode);
+                                });
                             }
                         }
                     }
                 } else {
-                    console.log("with no response from inside, you enter.");
-                    nextNode = "inHut";  
+                    updateStoryLog("with no response from inside, you enter.", function() {
+                        nextNode = "inHut";
+                        createStoryContainer(nextNode);
+                    });
                 }
                 break;
             case "Peek through window":
