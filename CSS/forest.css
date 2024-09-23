@@ -34,6 +34,11 @@ body {
 
 .progress {
     height: 25px;
+    border-radius: 0 5px 5px 0;
+}
+
+.progress-icon{
+    border-radius: 5px 0 0 5px;
 }
 
 .text-logs {
