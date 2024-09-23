@@ -127,6 +127,56 @@ body {
     background-color: #6F584B;
 }
 
+.fightScene{
+    background-color: #594236;
+    width: 60vh;
+    margin-top: 10px;
+}
+
+.monster-lvl{
+    background-color: #6F584B;
+}
+
+.card-option{
+    background-color: #594236;
+    width: 60vh;
+}
+
+.btn-attack{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #A1142D;
+    border-radius: 25px;
+}
+
+.btn-block{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #38C75F;
+    border-radius: 25px;
+}
+
+.btn-block{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #0077B0;
+    border-radius: 25px;
+}
+
+.btn-flee{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #38C75F;
+    border-radius: 25px;
+}
+
+.btn-wait{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #FFD100;
+    border-radius: 25px;
+}
+
 @media only screen and (max-width: 1500px) {
     .forest-sidebar {
         background-color: #594236;
