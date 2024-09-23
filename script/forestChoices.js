@@ -23,15 +23,14 @@ window.onload = function() {
 
 function setupInventoryListeners() {
     const items = [
-        { id: 'sword', text: 'You have a sword!' },
-        { id: 'spellbook', text: 'You have a spellbook!' },
-        { id: 'rope', text: 'You have a rope!' },
-        // Add more items as needed
+        { id: 'sword', text: 'A rather rusted sword.' },
+        { id: 'spellbook', text: 'A book filled with demonic magic. It states that with the following items you can summon a demon: Bottled soul, Black death plant, Bones, A ritual knife.' },
+        { id: 'rope', text: 'A ordinary bundle of rope.' },
     ];
 
     items.forEach(item => {
-        const img = document.getElementById(item.id);
-        img.addEventListener('click', function() {
+        const itemClick = document.getElementById(item.id);
+        itemClick.addEventListener('click', function() {
             updateStoryLog(item.text);
         });
     });
@@ -233,7 +232,7 @@ function handleSpecialActions(choice) {
                     updateStoryLog("You go back to leave the through the trapdoor", function() {
                         if (trapdoorBroken) {
                             updateStoryLog("You relsize that you broke the ladder during your entry", function() {
-                                // click item rope
+                                // click rope
                             });
                         } else {
 
