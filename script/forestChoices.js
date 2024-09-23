@@ -1,31 +1,77 @@
 import * as main from './main.js';
 import { storyNode } from './forestStory.js';
 
+let isDead = false;
+let searchedHut = false;
+let containerCount = 0;
+let monsterInHut = false;
+let monsterDead = false;
+let haveShoes = true;
+let trapdoorBroken = false;
+let haveRope = false;
+
+let createdContainers = [];
+
+// Set initial game state
 main.setStamina(10);
 main.setHealth(10);
 main.setMana(10);
 main.setWanted(0);
 main.setCoins(0);
 
-let isDead = false;
-let searchedHut = false;
-let containerCount = 0;
-let monsterInHut = true;
-let monsterDead = false;
-let haveShoes = true;
-let trapdoorBroken = false;
-let haveRope = false;
-
 window.onload = function() {
-    createStoryContainer('start');
+    if (localStorage.length !== 0) {
+        let savedContainers = [];
+
+        // Iterate over all items in localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+
+            // Only process keys that start with "container"
+            if (key.startsWith("container")) {
+                const value = localStorage.getItem(key);
+                let parsedValue;
+
+                try {
+                    parsedValue = JSON.parse(value);
+                } catch (e) {
+                    console.error(`Error parsing value for key ${key}:`, value);
+                    parsedValue = null;
+                }
+
+                // Ensure we have valid card data
+                if (parsedValue && parsedValue.storyNodeKey && parsedValue.containerNumber !== undefined) {
+                    savedContainers.push(parsedValue);
+                } else {
+                    console.error("Invalid card data found in localStorage:", parsedValue);
+                }
+            }
+        }
+
+        // Sort saved containers by their containerNumber (as numbers, not strings)
+        savedContainers.sort((a, b) => a.containerNumber - b.containerNumber);
+
+        // Load the cards in the correct order
+        savedContainers.forEach(container => {
+            createStoryContainer(container.storyNodeKey, container.containerNumber);
+        });
+
+        // Set containerCount to the highest containerNumber + 1
+        if (savedContainers.length > 0) {
+            containerCount = savedContainers[savedContainers.length - 1].containerNumber + 1;
+        }
+    } else {
+        createStoryContainer('start');
+    }
+
     setupInventoryListeners();
-}
+};
 
 function setupInventoryListeners() {
     const items = [
         { id: 'sword', text: 'A rather rusted sword.' },
         { id: 'spellbook', text: 'A book filled with demonic magic. It states that with the following items you can summon a demon: Bottled soul, Black death plant, Bones, A ritual knife.' },
-        { id: 'rope', text: 'A ordinary bundle of rope.' },
+        { id: 'rope', text: 'An ordinary bundle of rope.' },
     ];
 
     items.forEach(item => {
@@ -36,18 +82,26 @@ function setupInventoryListeners() {
     });
 }
 
-function createStoryContainer(storyNodeKey) {
+function clearSaveData() {
+    localStorage.clear();  // Clear local storage
+    console.log("All saved data has been cleared.");
+    window.location.reload();  // Reload the site
+}
+
+// Make sure the clear button calls clearSaveData when clicked
+document.getElementById("clear").onclick = clearSaveData;
+
+function createStoryContainer(storyNodeKey, containerNumber = null) {
     if (!storyNode[storyNodeKey]) {
         console.error(`Story node "${storyNodeKey}" does not exist.`);
         return;
     }
 
-    console.log(`Creating container for: ${storyNodeKey}`);
-
+    const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
     const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
     const container = document.createElement('div');
     container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
-    container.id = "card" + containerCount;
+    container.id = "card" + currentContainerCount;
 
     container.style.marginLeft = randomMarginLeft + "vh";
     container.style.width = "50vh";
@@ -63,14 +117,13 @@ function createStoryContainer(storyNodeKey) {
         buttonContainer.classList.add('row', 'text-center', 'mt-3');
         container.appendChild(buttonContainer);
 
-        storyNode[storyNodeKey].choices.forEach((choice, index) => {
+        storyNode[storyNodeKey].choices.forEach((choice) => {
             const button = document.createElement('button');
             button.textContent = choice.text;
             button.classList.add('btn', 'button', 'm-2');
 
             button.addEventListener('click', function () {
                 disableButtons(container, button);
-
                 if (choice.specialAction) {
                     handleSpecialActions(choice);
                 } else {
@@ -84,12 +137,23 @@ function createStoryContainer(storyNodeKey) {
             buttonContainer.appendChild(buttonCol);
         });
 
-        document.getElementById('game').appendChild(container);
+        // Add the new container to the createdContainers array
+        createdContainers.push(container);
 
-        if (containerCount > 0) {
+        // Append containers in order based on containerNumber
+        createdContainers.sort((a, b) => {
+            return parseInt(a.id.replace('card', '')) - parseInt(b.id.replace('card', ''));
+        });
+
+        // Clear the game element and reappend in order
+        const gameElement = document.getElementById('game');
+        gameElement.innerHTML = ''; // Clear existing cards
+        createdContainers.forEach(card => gameElement.appendChild(card));
+
+        if (currentContainerCount > 0) {
             new LeaderLine(
-                document.getElementById('card' + (containerCount - 1)),
-                document.getElementById('card' + containerCount),
+                document.getElementById('card' + (currentContainerCount - 1)),
+                document.getElementById('card' + currentContainerCount),
                 {
                     path: 'grid',
                     startSocket: 'bottom',
@@ -101,14 +165,29 @@ function createStoryContainer(storyNodeKey) {
                 }
             );
         }
+        
+        // Save the created container to localStorage
+        let savedContainer = {
+            id: container.id,
+            storyNodeKey: storyNodeKey,
+            choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
+            createdAt: new Date().toISOString(),
+            containerNumber: currentContainerCount
+        };
 
-        containerCount++;
+        localStorage.setItem("container" + currentContainerCount, JSON.stringify(savedContainer));
+
+        if (containerNumber === null) {
+            containerCount++;
+        }
     });
 }
 
+
+
 function handleSpecialActions(choice) {
     let nextNode = choice.next;
-    
+
     if (choice.specialAction) {
         console.log("Special action triggered for:", choice.text);
         let rand = Math.floor(Math.random() * 100);
@@ -184,7 +263,6 @@ function handleSpecialActions(choice) {
             case "Peek through window":
                 if (monsterInHut) {
                     warningCard();
-
                     updateStoryLog("You see the monster through the window.", function() {
                         setTimeout(function() {
                             rand = Math.floor(Math.random() * 100);
@@ -221,40 +299,39 @@ function handleSpecialActions(choice) {
                     createStoryContainer(nextNode);
                 }
                 break;
-                case "Enter":
-                    rand = Math.floor(Math.random() * 100);
-                    updateStoryLog("You attempt to climb down the rickety ladder.", function() {
-                        setTimeout(function() {
-                            if (rand >= 50) {
-                                updateStoryLog("You successfully climb down.", function() {
-                                    nextNode = "portal";
-                                    createStoryContainer(nextNode);
-                                });
-                            } else {
-                                updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
-                                    main.setHealth(main.health - 1);
-                                    nextNode = "portal";
-                                    createStoryContainer(nextNode);
-                                });
-                            }
-                        });
-                    });
-                    break;
-                case "Leave cricle":
-                    updateStoryLog("You go back to leave the through the trapdoor", function() {
-                        if (trapdoorBroken) {
-                            updateStoryLog("You relsize that you broke the ladder during your entry", function() {
-                                // click rope
+            case "Enter":
+                rand = Math.floor(Math.random() * 100);
+                updateStoryLog("You attempt to climb down the rickety ladder.", function() {
+                    setTimeout(function() {
+                        if (rand >= 50) {
+                            updateStoryLog("You successfully climb down.", function() {
+                                nextNode = "portal";
+                                createStoryContainer(nextNode);
                             });
                         } else {
-
+                            updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
+                                main.setHealth(main.health - 1);
+                                nextNode = "portal";
+                                createStoryContainer(nextNode);
+                            });
                         }
                     });
-                    break;
-                case "Return to fight monster":
-                    monsterBattle();
-                    break;
-                
+                });
+                break;
+            case "Leave circle":
+                updateStoryLog("You go back to leave through the trapdoor", function() {
+                    if (trapdoorBroken) {
+                        updateStoryLog("You realize that you broke the ladder during your entry", function() {
+                            // click rope
+                        });
+                    } else {
+                        // Handle the else case here if needed
+                    }
+                });
+                break;
+            case "Return to fight monster":
+                monsterBattle();
+                break;
         }
     }
 
@@ -394,7 +471,6 @@ function updateStoryLog(storyText, callback, speed = 30) {
     logContainer.scrollTop = logContainer.scrollHeight;
 }
 
-
 function typeWriter(txt, speed, p, logEntry, onComplete) {
     if (p < txt.length) {
         logEntry.innerHTML += txt.charAt(p);
@@ -415,5 +491,4 @@ updateStoryLog("You enter the dark forest, and hear rustling sounds.", function(
         console.log("Next action can proceed here.");
     });
 });
-
 */
