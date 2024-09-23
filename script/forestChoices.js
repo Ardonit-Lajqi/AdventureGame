@@ -212,7 +212,7 @@ function handleSpecialActions(choice) {
                                     createStoryContainer(nextNode); // Proceed to the next story node
                                 });
                             }
-                        }, 250); // Delay before executing the next action
+                        }); // Delay before executing the next action
                     });
                     break;
                 
