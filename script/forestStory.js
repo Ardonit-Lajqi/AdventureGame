@@ -58,7 +58,7 @@ export let storyNode = {
 
     leaveHut: {
         text: "You leave the hut and continue forward.",
-        question: "What do you do",
+        question: "What do you want to do",
         choices: [
             { text: "Walk", next: "walk" }
         ]
@@ -78,8 +78,17 @@ export let storyNode = {
         text: "You died",
         question: "You are dead",
         choices: [
-            { text: "Restart", next: "restart" },
+            { text: "Restart", next: "restart" }
         ]
     },
+
+    demonSummon: {
+        text: "Do you want to attempt to summon a demon?",
+        question: "What do you want to do",
+        choices: [
+            { text: "Yes", specialAction: true },
+            { text: "No", next: "portal" }
+        ]
+    }
 };
 
