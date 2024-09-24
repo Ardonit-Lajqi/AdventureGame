@@ -485,7 +485,6 @@ function handleSpecialActions(choice) {
                     });
                 } else {
                     nextNode = "trapdoor";
-                    createStoryContainer(nextNode);
                 }
                 break;
             case "Enter":
