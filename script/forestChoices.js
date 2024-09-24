@@ -1,16 +1,36 @@
 import * as main from './main.js';
 import { storyNode } from './forestStory.js';
 
-let isDead = false;
 let searchedHut = false;
-let containerCount = 0;
+let searchedCircle = false;
+
+let isDead = false;
+
 let monsterInHut = false;
 let monsterDead = false;
+
 let haveShoes = true;
+
 let trapdoorBroken = false;
+
 let haveRope = false;
 let canUseRope = false;
 let ropeOnTrapdoor = false;
+
+let haveBook = false;
+let readBook = false;
+
+let haveBottledSoul = false;
+
+let haveBlackDeathPlant = false;
+
+let haveBones = false;
+
+let haveRitualKnife = false;
+
+let haveSword = false;
+
+let containerCount = 0;
 let createdContainers = [];
 
 // Set initial game state
@@ -67,6 +87,14 @@ window.onload = function() {
                     haveRope = savedVaribles.rope;
                     canUseRope = savedVaribles.useRope;
                     ropeOnTrapdoor = savedVaribles.trapRoped;
+                    searchedCircle = savedVaribles.schCircle;
+                    haveBook = savedVaribles.book;
+                    readBook = savedVaribles.rdBook;
+                    haveBottledSoul = savedVaribles.oul;
+                    haveBlackDeathPlant = savedVaribles.deathPlant;
+                    haveBones = savedVaribles.bone;
+                    haveRitualKnife = savedVaribles.knife;
+                    haveSword = savedVaribles.sword;
                 }
             }
         }
@@ -102,9 +130,11 @@ function setupInventory(newItemId, removeItem) {
                     break;
                 case "spellbook":
                     item.innerHTML = '<img src="img/items/spellbook.png" alt="Spellbook">';
+                    haveBook = true;
                     break;
                 case "sword":
                     item.innerHTML = '<img src="img/items/sword (4).png" alt="Sword">';
+                    haveSword = true;
                     break;
                 default:
                     break;
@@ -136,6 +166,9 @@ function addClickEvent(itemId) {
             itemElement.addEventListener('click', function() {
                 if (itemData.id === 'rope' && trapdoorBroken && canUseRope) {
                     useRopeToAscend();
+                } else if (itemData.id === 'spellbook') {
+                    readBook = true;
+                    updateStoryLog(itemData.text);
                 } else {
                     updateStoryLog(itemData.text);
                 }
@@ -190,6 +223,14 @@ function saveVaribles() {
         rope: haveRope,
         useRope: canUseRope,
         trapRoped: ropeOnTrapdoor,
+        schCircle: searchedCircle,
+        book: haveBook,
+        rdBook: readBook,
+        soul: haveBottledSoul,
+        deathPlant: haveBlackDeathPlant,
+        bone: haveBones,
+        knife: haveRitualKnife,
+        sword: haveSword
     };
 
     localStorage.setItem("variables", JSON.stringify(savedVarData));
@@ -366,14 +407,6 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
     }
 }
 
-
-
-
-
-
-
-
-
 function handleSpecialActions(choice) {
     let nextNode = choice.next;
 
@@ -486,7 +519,6 @@ function handleSpecialActions(choice) {
                     });
                 } else {
                     nextNode = "trapdoor";
-                    createStoryContainer(nextNode);
                 }
                 break;
             case "Enter":
@@ -516,36 +548,73 @@ function handleSpecialActions(choice) {
                     });
                 }
                 break;
-                case "Leave circle":
-                    updateStoryLog("You go back to leave through the trapdoor", function() {
-                        if (ropeOnTrapdoor) {
-                            useRopeToAscend();
+            case "Leave circle":
+                updateStoryLog("You go back to leave through the trapdoor", function() {
+                    if (ropeOnTrapdoor) {
+                        useRopeToAscend();
+                    } else {
+                        if (trapdoorBroken) {
+                            updateStoryLog("You realize that you broke the ladder during your entry", function() {
+                                if (haveRope) {
+                                    updateStoryLog("You could use the rope to climb up.", function() {
+                                        canUseRope = true; // Allow the player to use the rope
+                                        setupInventory(null);
+                                    });
+                                } else {
+                                    updateStoryLog("Without a rope, you can't climb up and are stuck down here.", function() {
+                                        updateStoryLog("After a few days you die from thirst.", function() {
+                                            nextNode = "dead";
+                                            createStoryContainer(nextNode);
+                                        });
+                                    });
+                                }
+                            });
                         } else {
-                            if (trapdoorBroken) {
-                                updateStoryLog("You realize that you broke the ladder during your entry", function() {
-                                    if (haveRope) {
-                                        updateStoryLog("You could use the rope to climb up.", function() {
-                                            canUseRope = true; // Allow the player to use the rope
-                                            setupInventory(null);
-                                        });
-                                    } else {
-                                        updateStoryLog("Without a rope, you can't climb up and are stuck down here.", function() {
-                                            updateStoryLog("After a few days you die from thirst.", function() {
-                                                nextNode = "dead";
-                                                createStoryContainer(nextNode);
-                                            });
-                                        });
-                                    }
-                                });
-                            } else {
-                                updateStoryLog("You climb back up the ladder", function() {
-                                    nextNode = "trapdoor";
-                                    createStoryContainer(nextNode);
-                                });
-                            }
+                            updateStoryLog("You climb back up the ladder", function() {
+                                nextNode = "trapdoor";
+                                createStoryContainer(nextNode);
+                            });
                         }
+                    }
+                });
+                break;
+            case "Search circle":
+                if (!searchedCircle) {
+                    searchedCircle = true;
+                    updateStoryLogQueue(["You start searching around the circle.", "You find (circle items)."], function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
                     });
-                    break;
+                } else {
+                    updateStoryLogQueue(["You look around but find nothing new."], function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
+                    });
+                }
+                break;
+            case "Summon":
+                if (haveBlackDeathPlant && haveBones && haveBottledSoul && haveRitualKnife && haveBook && readBook) {
+                    updateStoryLogQueue(["You have all the necessary items."], function() {
+                        nextNode = "demonSummon";
+                        createStoryContainer(nextNode);
+                    });
+                } else if (readBook) {
+                    updateStoryLogQueue(["From reading the book you know that you need a Bottled soul, Black death plant, Bones and a Ritual knife in order to summon a demon."], function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
+                    });
+                } else if (haveBook) {
+                    updateStoryLogQueue(["You don't know want to do in order to summon anything, perhaps you could read the book you picked up."], function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
+                    });
+                } else {
+                    updateStoryLogQueue(["You don't know want to do in order to summon anything."], function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
+                    });
+                }
+                break;
             case "Return to fight monster":
                 monsterBattle();
                 break;
