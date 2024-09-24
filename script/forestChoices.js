@@ -146,6 +146,18 @@ function saveContainerState(storyNodeKey, containerNumber, pressedButton) {
     localStorage.setItem("container" + containerNumber, JSON.stringify(savedContainer));
 }
 
+function saveVariables() {
+    let saveData = {
+        Hp: main.health,
+        Mp: main.mana,
+        Sp: main.stamina,
+        Crime: main.wanted,
+        Gold: main.coin
+    };
+
+    localStorage.setItem("Stats", JSON.stringify(saveData));
+}
+
 function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null) {
     if (!storyNode[storyNodeKey]) {
       console.error(`Story node "${storyNodeKey}" does not exist.`);
@@ -213,6 +225,7 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
   
       // Save the state of the container
       saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+      saveVariables()
   
       if (containerNumber === null) {
         containerCount++;
