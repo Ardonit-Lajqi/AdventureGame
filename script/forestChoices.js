@@ -10,6 +10,8 @@ let haveShoes = true;
 let trapdoorBroken = false;
 let haveRope = false;
 let createdContainers = [];
+let canUseRope = false;  // Add a flag to track if rope can be used
+let ropeOnTrapdoor = false;
 
 // Set initial game state
 main.setStamina(10);
@@ -62,24 +64,66 @@ window.onload = function() {
     } else {
         createStoryContainer('start');
     }
-
-    setupInventoryListeners();
+    setupInventory("rope", false);
+    
 };
 
-function setupInventoryListeners() {
+function setupInventory(newItemId, removeItem) {
+    let itemBoxes = document.getElementsByClassName("inventory-item");
+
+    // Add new item to the first empty slot
+    Array.from(itemBoxes).some(item => {
+        if (!item.id && !removeItem) {
+            item.id = newItemId;
+            switch (newItemId) {
+                case "rope":
+                    item.innerHTML = '<img src="img/items/rope.png" alt="Rope">';
+                    haveRope = true;
+                    break;
+                case "spellbook":
+                    item.innerHTML = '<img src="img/items/spellbook.png" alt="Spellbook">';
+                    break;
+                case "sword":
+                    item.innerHTML = '<img  src="img/items/sword (4).png" alt="Sword">';
+                    break;
+                default:
+                    break;
+            }
+            console.log(`Item added to slot: ${item}`);
+            addClickEvent(item.id);
+            return true; // Stop after the first empty slot is found
+        } else if (item.id == newItemId && removeItem) {
+            item.id = "";
+            item.innerHTML = "";
+            return true;
+        }
+        return false;
+    });
+}
+
+// Setup click events for existing items
+function addClickEvent(itemId) {
     const items = [
         { id: 'sword', text: 'A rather rusted sword.' },
         { id: 'spellbook', text: 'A book filled with demonic magic. It states that with the following items you can summon a demon: Bottled soul, Black death plant, Bones, A ritual knife.' },
         { id: 'rope', text: 'An ordinary bundle of rope.' },
     ];
 
-    items.forEach(item => {
-        const itemClick = document.getElementById(item.id);
-        itemClick.addEventListener('click', function() {
-            updateStoryLog(item.text);
-        });
-    });
+    const itemData = items.find(i => i.id === itemId);
+    if (itemData) {
+        const itemElement = document.getElementById(itemData.id);
+        if (itemElement) {
+            itemElement.addEventListener('click', function() {
+                if (itemData.id === 'rope' && trapdoorBroken && canUseRope) {
+                    useRopeToAscend();
+                } else {
+                    updateStoryLog(itemData.text);
+                }
+            });
+        }
+    }
 }
+
 
 function clearSaveData() {
     localStorage.clear();  // Clear local storage
@@ -300,34 +344,61 @@ function handleSpecialActions(choice) {
                 break;
             case "Enter":
                 rand = Math.floor(Math.random() * 100);
-                updateStoryLog("You attempt to climb down the rickety ladder.", function() {
-                    setTimeout(function() {
-                        if (rand >= 50) {
-                            updateStoryLog("You successfully climb down.", function() {
-                                nextNode = "portal";
-                                createStoryContainer(nextNode);
-                            });
+                if (ropeOnTrapdoor) {
+                    updateStoryLog("You slide down the rope.", function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
+                    });
+                } else {
+                    updateStoryLog("You attempt to climb down the rickety ladder.", function() {
+                        setTimeout(function() {
+                            if (rand >= 50) {
+                                updateStoryLog("You successfully climb down.", function() {
+                                    nextNode = "portal";
+                                    createStoryContainer(nextNode);
+                                });
+                            } else {
+                                updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
+                                    trapdoorBroken = true;
+                                    main.setHealth(main.health - 1);
+                                    nextNode = "portal";
+                                    createStoryContainer(nextNode);
+                                });
+                            }
+                        });
+                    });
+                }
+                break;
+                case "Leave circle":
+                    updateStoryLog("You go back to leave through the trapdoor", function() {
+                        if (ropeOnTrapdoor) {
+                            useRopeToAscend();
                         } else {
-                            updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
-                                main.setHealth(main.health - 1);
-                                nextNode = "portal";
-                                createStoryContainer(nextNode);
-                            });
+                            if (trapdoorBroken) {
+                                updateStoryLog("You realize that you broke the ladder during your entry", function() {
+                                    if (haveRope) {
+                                        updateStoryLog("You could use the rope to climb up.", function() {
+                                            canUseRope = true; // Allow the player to use the rope
+                                            setupInventory(null);
+                                        });
+                                    } else {
+                                        updateStoryLog("Without a rope, you can't climb up and are stuck down here.", function() {
+                                            updateStoryLog("After a few days you die from thirst.", function() {
+                                                nextNode = "dead";
+                                                createStoryContainer(nextNode);
+                                            });
+                                        });
+                                    }
+                                });
+                            } else {
+                                updateStoryLog("You climb back up the ladder", function() {
+                                    nextNode = "trapdoor";
+                                    createStoryContainer(nextNode);
+                                });
+                            }
                         }
                     });
-                });
-                break;
-            case "Leave circle":
-                updateStoryLog("You go back to leave through the trapdoor", function() {
-                    if (trapdoorBroken) {
-                        updateStoryLog("You realize that you broke the ladder during your entry", function() {
-                            // click rope
-                        });
-                    } else {
-                        // Handle the else case here if needed
-                    }
-                });
-                break;
+                    break;
             case "Return to fight monster":
                 monsterBattle();
                 break;
@@ -335,6 +406,15 @@ function handleSpecialActions(choice) {
     }
 
     createStoryContainer(nextNode);
+}
+
+function useRopeToAscend() {
+    ropeOnTrapdoor = true;
+    canUseRope = false;
+    setupInventory("rope", true);
+    updateStoryLog("You use the rope to climb through the broken trapdoor.", function() {
+        createStoryContainer("trapdoor");
+    });
 }
 
 function monsterBattle() {
