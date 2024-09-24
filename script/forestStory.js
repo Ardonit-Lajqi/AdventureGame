@@ -68,8 +68,8 @@ export let storyNode = {
         text: "You see a room with a demoic circle in the middle.",
         question: "What do you want to do?",
         choices: [
-            { text: "Leave cricle", specialAction: true },
-            { text: "Search cirle", specialAction: true },
+            { text: "Leave circle", specialAction: true },
+            { text: "Search circle", specialAction: true },
             { text: "Summon", specialAction: true }
         ]
     },
