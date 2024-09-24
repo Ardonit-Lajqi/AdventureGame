@@ -9,7 +9,6 @@ let monsterDead = false;
 let haveShoes = true;
 let trapdoorBroken = false;
 let haveRope = false;
-
 let createdContainers = [];
 
 // Set initial game state
@@ -166,7 +165,20 @@ function createStoryContainer(storyNodeKey, containerNumber = null) {
             );
         }
         
-        containerCount++;
+        // Save the created container to localStorage
+        let savedContainer = {
+            id: container.id,
+            storyNodeKey: storyNodeKey,
+            choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
+            createdAt: new Date().toISOString(),
+            containerNumber: currentContainerCount
+        };
+
+        localStorage.setItem("container" + currentContainerCount, JSON.stringify(savedContainer));
+
+        if (containerNumber === null) {
+            containerCount++;
+        }
     });
 }
 
