@@ -47,25 +47,35 @@ export function setWanted(value) {
 }
 
 
-let mybutton = document.getElementById("btn-back-to-top");
+let toggleButton = document.getElementById("btn-toggle-scroll");
 
 window.onscroll = function () {
-  scrollFunction();
+    scrollFunction();
 };
 
 function scrollFunction() {
-  if (document.body.scrollTop > 10 || document.documentElement.scrollTop > 10) 
+    if (document.body.scrollTop > 10 || document.documentElement.scrollTop > 10) {
+        toggleButton.style.display = "block";
+        toggleButton.innerHTML = `<img src="img/icons/arrowUp.png" alt="scrollUp" style="width: 25px;">`;
+    } else {
+        toggleButton.style.display = "block";
+        toggleButton.innerHTML = `<img src="img/icons/arrowDown.png" alt="scrollDown" style="width: 25px;">`;
+    }
+}
+
+toggleButton.addEventListener("click", toggleScroll);
+
+function toggleScroll() {
+    if (document.body.scrollTop > 10 || document.documentElement.scrollTop > 10) 
     {
-        mybutton.style.display = "block";
-    } 
-  else {
-    mybutton.style.display = "none";
-  }
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    } else {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: "smooth"
+        });
+    }
 }
 
-mybutton.addEventListener("click", backToTop);
 
-function backToTop() {
-  document.body.scrollTop = 0;
-  document.documentElement.scrollTop = 0;
-}
