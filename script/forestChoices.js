@@ -166,24 +166,7 @@ function createStoryContainer(storyNodeKey, containerNumber = null) {
             );
         }
         
-<<<<<<< HEAD
         containerCount++;
-=======
-        // Save the created container to localStorage
-        let savedContainer = {
-            id: container.id,
-            storyNodeKey: storyNodeKey,
-            choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
-            createdAt: new Date().toISOString(),
-            containerNumber: currentContainerCount
-        };
-
-        localStorage.setItem("container" + currentContainerCount, JSON.stringify(savedContainer));
-
-        if (containerNumber === null) {
-            containerCount++;
-        }
->>>>>>> 357ea74b23e38cabcc83ddb1a42518ae148be23b
     });
 }
 
