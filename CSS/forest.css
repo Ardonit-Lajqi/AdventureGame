@@ -94,6 +94,31 @@ body {
     font-family: sans-serif;
 }
 
+.reward {
+    border: 3px solid #FFD100;
+    font-size: 36px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+}
+
+.reward span{
+    font-size: 25px;
+}
+
+.reward-item{
+    background-color: #2B5917;
+    width: 8vh;
+    height: 8vh;
+    border: 2px solid #FFD100;
+    padding: 5px;
+    margin-top: 2vh;
+}
+
+.reward-item:hover {
+    border: 2px solid #cea800;
+    transform: scale(1.1);
+}
 
 .button {
     background-color: #2B5917;
