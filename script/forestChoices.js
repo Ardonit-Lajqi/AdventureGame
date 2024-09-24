@@ -9,7 +9,6 @@ let monsterDead = false;
 let haveShoes = true;
 let trapdoorBroken = false;
 let haveRope = false;
-
 let createdContainers = [];
 
 // Set initial game state
