@@ -9,9 +9,9 @@ let monsterDead = false;
 let haveShoes = true;
 let trapdoorBroken = false;
 let haveRope = false;
-let createdContainers = [];
-let canUseRope = false;  // Add a flag to track if rope can be used
+let canUseRope = false;
 let ropeOnTrapdoor = false;
+let createdContainers = [];
 
 // Set initial game state
 main.setStamina(10);
@@ -23,48 +23,69 @@ main.setCoins(0);
 window.onload = function() {
     if (localStorage.length !== 0) {
         let savedContainers = [];
-
+  
         // Iterate over all items in localStorage
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-
+  
             // Only process keys that start with "container"
             if (key.startsWith("container")) {
                 const value = localStorage.getItem(key);
                 let parsedValue;
-
+  
                 try {
                     parsedValue = JSON.parse(value);
                 } catch (e) {
                     console.error(`Error parsing value for key ${key}:`, value);
                     parsedValue = null;
                 }
-
+  
                 // Ensure we have valid card data
                 if (parsedValue && parsedValue.storyNodeKey && parsedValue.containerNumber !== undefined) {
                     savedContainers.push(parsedValue);
                 } else {
                     console.error("Invalid card data found in localStorage:", parsedValue);
                 }
+            } else if (key.startsWith("stats")) {
+                let savedStats = JSON.parse(localStorage.getItem("stats"));
+                if (savedStats) {
+                    main.setHealth(savedStats.Hp);
+                    main.setMana(savedStats.Mp);
+                    main.setStamina(savedStats.Sp);
+                    main.setWanted(savedStats.Crime);
+                    main.setCoins(savedStats.Gold);
+                }
+            } else if (key.startsWith("variables")) {
+                let savedVaribles = JSON.parse(localStorage.getItem("variables"));
+                if (savedVaribles) {
+                    isDead = savedVaribles.dead;
+                    searchedHut = savedVaribles.schHut;
+                    monsterInHut = savedVaribles.monInHut;
+                    monsterDead = savedVaribles.monDead;
+                    haveShoes = savedVaribles.shoe;
+                    trapdoorBroken = savedVaribles.trapBroke;
+                    haveRope = savedVaribles.rope;
+                    canUseRope = savedVaribles.useRope;
+                    ropeOnTrapdoor = savedVaribles.trapRoped;
+                }
             }
         }
-
+  
         // Sort saved containers by their containerNumber (as numbers, not strings)
         savedContainers.sort((a, b) => a.containerNumber - b.containerNumber);
-
+  
         // Load the cards in the correct order
         savedContainers.forEach(container => {
-            createStoryContainer(container.storyNodeKey, container.containerNumber, container.chosenChoice);
+            createStoryContainer(container.storyNodeKey, container.containerNumber, container.chosenChoice, true);
         });
-
+  
         // Set containerCount to the highest containerNumber + 1
         if (savedContainers.length > 0) {
-            containerCount = savedContainers[savedContainers.length - 1].containerNumber + 1;
+            containerCount = Math.max(0, parseInt(savedContainers[savedContainers.length - 1].containerNumber) + 1);
         }
     } else {
         createStoryContainer('start');
     }
-    setupInventory("rope", false);
 };
 
 function setupInventory(newItemId, removeItem) {
@@ -83,7 +104,7 @@ function setupInventory(newItemId, removeItem) {
                     item.innerHTML = '<img src="img/items/spellbook.png" alt="Spellbook">';
                     break;
                 case "sword":
-                    item.innerHTML = '<img  src="img/items/sword (4).png" alt="Sword">';
+                    item.innerHTML = '<img src="img/items/sword (4).png" alt="Sword">';
                     break;
                 default:
                     break;
@@ -140,13 +161,13 @@ function saveContainerState(storyNodeKey, containerNumber, pressedButton) {
         choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
         chosenChoice: pressedButton, // Save the pressed button text
         createdAt: new Date().toISOString(),
-        containerNumber: containerNumber
+        containerNumber: parseInt(containerNumber) // Store containerNumber as an integer
     };
-
+  
     localStorage.setItem("container" + containerNumber, JSON.stringify(savedContainer));
 }
 
-function saveVariables() {
+function saveStats() {
     let saveData = {
         Hp: main.health,
         Mp: main.mana,
@@ -155,13 +176,29 @@ function saveVariables() {
         Gold: main.coin
     };
 
-    localStorage.setItem("Stats", JSON.stringify(saveData));
+    localStorage.setItem("stats", JSON.stringify(saveData));
 }
 
-function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null) {
+function saveVaribles() {
+    let savedVarData = {
+        dead: isDead,
+        schHut: searchedHut,
+        monInHut: monsterInHut,
+        monDead: monsterDead,
+        shoe: haveShoes,
+        trapBroke: trapdoorBroken,
+        rope: haveRope,
+        useRope: canUseRope,
+        trapRoped: ropeOnTrapdoor,
+    };
+
+    localStorage.setItem("variables", JSON.stringify(savedVarData));
+}
+
+function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null, loading = false) {
     if (!storyNode[storyNodeKey]) {
-      console.error(`Story node "${storyNodeKey}" does not exist.`);
-      return;
+        console.error(`Story node "${storyNodeKey}" does not exist.`);
+        return;
     }
   
     const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
@@ -181,80 +218,156 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
   
     // Create and display the story text
     updateStoryLog(storyNode[storyNodeKey].text, function() {
-      const buttonContainer = document.createElement('div');
-      buttonContainer.classList.add('row', 'text-center', 'mt-3');
-      container.appendChild(buttonContainer);
+        const buttonContainer = document.createElement('div');
+        buttonContainer.classList.add('row', 'text-center', 'mt-3');
+        container.appendChild(buttonContainer);
   
-      // Store the pressed button information
-      storyNode[storyNodeKey].choices.forEach((choice) => {
-        const button = document.createElement('button');
-        button.textContent = choice.text;
-        if (pressedButton !== null) {
-          button.disabled = true;
-          if (button.textContent == pressedButton) {
-            button.classList.add('btn', 'button', 'm-2', 'pressed');
-          } else {
-            button.classList.add('btn', 'button', 'm-2', 'disabled');
-          }
-        } else {
-          button.classList.add('btn', 'button', 'm-2');
-        }
+        // Store the pressed button information
+        storyNode[storyNodeKey].choices.forEach((choice) => {
+            const button = document.createElement('button');
+            button.textContent = choice.text;
+            if (pressedButton !== null) {
+                button.disabled = true;
+                if (button.textContent == pressedButton) {
+                    button.classList.add('btn', 'button', 'm-2', 'pressed');
+                } else {
+                    button.classList.add('btn', 'button', 'm-2', 'disabled');
+                }
+            } else {
+                button.classList.add('btn', 'button', 'm-2');
+            }
   
-        button.addEventListener('click', function () {
-          disableButtons(container, button);
-          if (!button.classList.contains('disabled')) {
-            pressedButton = button.textContent; // Get the text of the pressed button
-          }
-          saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
-          if (choice.specialAction) {
-            handleSpecialActions(choice);
-          } else {
-            createStoryContainer(choice.next);
-          }
+            button.addEventListener('click', function () {
+                disableButtons(container, button);
+                if (!button.classList.contains('disabled')) {
+                    pressedButton = button.textContent; // Get the text of the pressed button
+                }
+                saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+                if (choice.specialAction) {
+                    handleSpecialActions(choice);
+                } else {
+                    createStoryContainer(choice.next);
+                }
+            });
+  
+            // Check if this button should be the pressed button
+            const buttonCol = document.createElement('div');
+            buttonCol.classList.add('col-4');
+            buttonCol.appendChild(button);
+            buttonContainer.appendChild(buttonCol);
         });
   
-        // Check if this button should be the pressed button
-        const buttonCol = document.createElement('div');
-        buttonCol.classList.add('col-4');
-        buttonCol.appendChild(button);
-        buttonContainer.appendChild(buttonCol);
-      });
+        // Add the new container to the createdContainers array
+        createdContainers.push({ container, containerNumber: currentContainerCount });
   
-      // Add the new container to the createdContainers array
-      createdContainers.push(container);
+        // Save the state of the container
+        saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+        saveStats();
+        saveVaribles();
   
-      // Save the state of the container
-      saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
-      saveVariables()
+        if (containerNumber === null) {
+            containerCount++;
+        }
   
-      if (containerNumber === null) {
-        containerCount++;
-      }
+        // Ensure containers are added in the correct order based on containerNumber (not ID)
+        createdContainers.sort((a, b) => a.containerNumber - b.containerNumber);
   
-      // Ensure containers are added in the correct order
-      createdContainers.sort((a, b) => a.id.localeCompare(b.id)); // Sort by container ID
-      const gameElement = document.getElementById('game');
-      gameElement.innerHTML = ''; // Clear existing cards
-      createdContainers.forEach(card => gameElement.appendChild(card));
+        const gameElement = document.getElementById('game');
+        gameElement.innerHTML = ''; // Clear existing cards
+        createdContainers.forEach(({ container }) => gameElement.appendChild(container));
   
-      // Other existing code for leader lines or other functionalities...
-      if (currentContainerCount > 0) {
-        new LeaderLine(
-          document.getElementById('card' + (currentContainerCount - 1)),
-          document.getElementById('card' + currentContainerCount),
-          {
-            path: 'grid',
-            startSocket: 'bottom',
-            endSocket: 'top',
-            color: '#327117',
-            size: 4,
-            outline: false,
-            dropShadow: true
-          }
-        );
-      }
+        if (currentContainerCount > 0 && !loading) {
+            new LeaderLine(
+                document.getElementById('card' + (currentContainerCount - 1)),
+                document.getElementById('card' + currentContainerCount),
+                {
+                    path: 'grid',
+                    startSocket: 'bottom',
+                    endSocket: 'top',
+                    color: '#327117',
+                    size: 4,
+                    outline: false,
+                    dropShadow: true
+                }
+            );
+        } else if (currentContainerCount > 0 && loading) {
+            for (let index = 1; index < containerCount; index++) {
+                new LeaderLine(
+                    document.getElementById('card' + (index - 1)),
+                    document.getElementById('card' + index),
+                    {
+                        path: 'grid',
+                        startSocket: 'bottom',
+                        endSocket: 'top',
+                        color: '#327117',
+                        size: 4,
+                        outline: false,
+                        dropShadow: true
+                    }
+                );
+
+            }
+        }
     });
-  }
+}
+
+function updateStoryLogQueue(textArray, callback) {
+    let index = 0;
+
+    function processNext() {
+        if (index < textArray.length) {
+            updateStoryLog(textArray[index], function() {
+                index++;
+                processNext();
+            });
+        } else if (callback) {
+            callback();
+        }
+    }
+
+    processNext();
+}
+
+let lastStoryLogTime = 0;
+
+function updateStoryLog(storyText, callback, speed = 30) {
+    const logContainer = document.getElementById('text-log');
+
+    const oldLogs = logContainer.querySelectorAll('p.story-log');
+    oldLogs.forEach(log => {
+        log.classList.add('old-logs');
+    });
+
+    const logEntry = document.createElement('p');
+    logEntry.classList.add('story-log');
+    logContainer.appendChild(logEntry);
+
+    let p = 0;
+    typeWriter(storyText, speed, p, logEntry, function() {
+        setTimeout(() => {
+            if (callback) {
+                callback();
+            }
+        }, 250);
+    });
+
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function typeWriter(txt, speed, p, logEntry, onComplete) {
+    if (p < txt.length) {
+        logEntry.innerHTML += txt.charAt(p);
+        p++;
+        setTimeout(function () {
+            typeWriter(txt, speed, p, logEntry, onComplete);
+        }, speed);
+    } else if (onComplete) {
+        onComplete();
+    }
+}
+
+
+
 
 
 
@@ -538,61 +651,6 @@ function disableButtons(container, clickedButton) {
             button.classList.add('pressed');
         }
     });
-}
-
-function updateStoryLogQueue(textArray, callback) {
-    let index = 0;
-
-    function processNext() {
-        if (index < textArray.length) {
-            updateStoryLog(textArray[index], function() {
-                index++;
-                processNext();
-            });
-        } else if (callback) {
-            callback();
-        }
-    }
-
-    processNext();
-}
-
-let lastStoryLogTime = 0;
-
-function updateStoryLog(storyText, callback, speed = 30) {
-    const logContainer = document.getElementById('text-log');
-
-    const oldLogs = logContainer.querySelectorAll('p.story-log');
-    oldLogs.forEach(log => {
-        log.classList.add('old-logs');
-    });
-
-    const logEntry = document.createElement('p');
-    logEntry.classList.add('story-log');
-    logContainer.appendChild(logEntry);
-
-    let p = 0;
-    typeWriter(storyText, speed, p, logEntry, function() {
-        setTimeout(() => {
-            if (callback) {
-                callback();
-            }
-        }, 250);
-    });
-
-    logContainer.scrollTop = logContainer.scrollHeight;
-}
-
-function typeWriter(txt, speed, p, logEntry, onComplete) {
-    if (p < txt.length) {
-        logEntry.innerHTML += txt.charAt(p);
-        p++;
-        setTimeout(function () {
-            typeWriter(txt, speed, p, logEntry, onComplete);
-        }, speed);
-    } else if (onComplete) {
-        onComplete();
-    }
 }
 
 /*
