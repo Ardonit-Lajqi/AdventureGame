@@ -54,7 +54,7 @@ window.onload = function() {
 
         // Load the cards in the correct order
         savedContainers.forEach(container => {
-            createStoryContainer(container.storyNodeKey, container.containerNumber);
+            createStoryContainer(container.storyNodeKey, container.containerNumber, container.chosenChoice);
         });
 
         // Set containerCount to the highest containerNumber + 1
@@ -65,7 +65,6 @@ window.onload = function() {
         createStoryContainer('start');
     }
     setupInventory("rope", false);
-    
 };
 
 function setupInventory(newItemId, removeItem) {
@@ -124,7 +123,6 @@ function addClickEvent(itemId) {
     }
 }
 
-
 function clearSaveData() {
     localStorage.clear();  // Clear local storage
     console.log("All saved data has been cleared.");
@@ -134,97 +132,119 @@ function clearSaveData() {
 // Make sure the clear button calls clearSaveData when clicked
 document.getElementById("clear").onclick = clearSaveData;
 
-function createStoryContainer(storyNodeKey, containerNumber = null) {
-    if (!storyNode[storyNodeKey]) {
-        console.error(`Story node "${storyNodeKey}" does not exist.`);
-        return;
-    }
+// Function to save container state
+function saveContainerState(storyNodeKey, containerNumber, pressedButton) {
+    let savedContainer = {
+        id: "card" + containerNumber,
+        storyNodeKey: storyNodeKey,
+        choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
+        chosenChoice: pressedButton, // Save the pressed button text
+        createdAt: new Date().toISOString(),
+        containerNumber: containerNumber
+    };
 
+    localStorage.setItem("container" + containerNumber, JSON.stringify(savedContainer));
+}
+
+function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null) {
+    if (!storyNode[storyNodeKey]) {
+      console.error(`Story node "${storyNodeKey}" does not exist.`);
+      return;
+    }
+  
     const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
     const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
     const container = document.createElement('div');
     container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
     container.id = "card" + currentContainerCount;
-
+  
     container.style.marginLeft = randomMarginLeft + "vh";
     container.style.width = "50vh";
     container.style.transform = `translateX(${randomMarginLeft}vh)`;
-
+  
     const questionTitle = document.createElement('h2');
     questionTitle.classList.add('text-center', 'text-light', 'mt-2');
     questionTitle.innerHTML = storyNode[storyNodeKey].question;
     container.appendChild(questionTitle);
-
+  
+    // Create and display the story text
     updateStoryLog(storyNode[storyNodeKey].text, function() {
-        const buttonContainer = document.createElement('div');
-        buttonContainer.classList.add('row', 'text-center', 'mt-3');
-        container.appendChild(buttonContainer);
-
-        storyNode[storyNodeKey].choices.forEach((choice) => {
-            const button = document.createElement('button');
-            button.textContent = choice.text;
-            button.classList.add('btn', 'button', 'm-2');
-
-            button.addEventListener('click', function () {
-                disableButtons(container, button);
-                if (choice.specialAction) {
-                    handleSpecialActions(choice);
-                } else {
-                    createStoryContainer(choice.next);
-                }
-            });
-
-            const buttonCol = document.createElement('div');
-            buttonCol.classList.add('col-4');
-            buttonCol.appendChild(button);
-            buttonContainer.appendChild(buttonCol);
-        });
-
-        // Add the new container to the createdContainers array
-        createdContainers.push(container);
-
-        // Append containers in order based on containerNumber
-        createdContainers.sort((a, b) => {
-            return parseInt(a.id.replace('card', '')) - parseInt(b.id.replace('card', ''));
-        });
-
-        // Clear the game element and reappend in order
-        const gameElement = document.getElementById('game');
-        gameElement.innerHTML = ''; // Clear existing cards
-        createdContainers.forEach(card => gameElement.appendChild(card));
-
-        if (currentContainerCount > 0) {
-            new LeaderLine(
-                document.getElementById('card' + (currentContainerCount - 1)),
-                document.getElementById('card' + currentContainerCount),
-                {
-                    path: 'grid',
-                    startSocket: 'bottom',
-                    endSocket: 'top',
-                    color: '#327117',
-                    size: 4,
-                    outline: false,
-                    dropShadow: true
-                }
-            );
+      const buttonContainer = document.createElement('div');
+      buttonContainer.classList.add('row', 'text-center', 'mt-3');
+      container.appendChild(buttonContainer);
+  
+      // Store the pressed button information
+      storyNode[storyNodeKey].choices.forEach((choice) => {
+        const button = document.createElement('button');
+        button.textContent = choice.text;
+        if (pressedButton !== null) {
+          button.disabled = true;
+          if (button.textContent == pressedButton) {
+            button.classList.add('btn', 'button', 'm-2', 'pressed');
+          } else {
+            button.classList.add('btn', 'button', 'm-2', 'disabled');
+          }
+        } else {
+          button.classList.add('btn', 'button', 'm-2');
         }
-        
-        // Save the created container to localStorage
-        let savedContainer = {
-            id: container.id,
-            storyNodeKey: storyNodeKey,
-            choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
-            createdAt: new Date().toISOString(),
-            containerNumber: currentContainerCount
-        };
-
-        localStorage.setItem("container" + currentContainerCount, JSON.stringify(savedContainer));
-
-        if (containerNumber === null) {
-            containerCount++;
-        }
+  
+        button.addEventListener('click', function () {
+          disableButtons(container, button);
+          if (!button.classList.contains('disabled')) {
+            pressedButton = button.textContent; // Get the text of the pressed button
+          }
+          saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+          if (choice.specialAction) {
+            handleSpecialActions(choice);
+          } else {
+            createStoryContainer(choice.next);
+          }
+        });
+  
+        // Check if this button should be the pressed button
+        const buttonCol = document.createElement('div');
+        buttonCol.classList.add('col-4');
+        buttonCol.appendChild(button);
+        buttonContainer.appendChild(buttonCol);
+      });
+  
+      // Add the new container to the createdContainers array
+      createdContainers.push(container);
+  
+      // Save the state of the container
+      saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+  
+      if (containerNumber === null) {
+        containerCount++;
+      }
+  
+      // Ensure containers are added in the correct order
+      createdContainers.sort((a, b) => a.id.localeCompare(b.id)); // Sort by container ID
+      const gameElement = document.getElementById('game');
+      gameElement.innerHTML = ''; // Clear existing cards
+      createdContainers.forEach(card => gameElement.appendChild(card));
+  
+      // Other existing code for leader lines or other functionalities...
+      if (currentContainerCount > 0) {
+        new LeaderLine(
+          document.getElementById('card' + (currentContainerCount - 1)),
+          document.getElementById('card' + currentContainerCount),
+          {
+            path: 'grid',
+            startSocket: 'bottom',
+            endSocket: 'top',
+            color: '#327117',
+            size: 4,
+            outline: false,
+            dropShadow: true
+          }
+        );
+      }
     });
-}
+  }
+
+
+
 
 
 
