@@ -480,6 +480,7 @@ function handleSpecialActions(choice) {
                 if (!searchedHut) {
                     searchedHut = true;
                     updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
+                        rewardCard();
                         nextNode = "trapdoor";
                         createStoryContainer(nextNode);
                     });
@@ -639,6 +640,41 @@ function warningCard() {
     previousCard.classList.add("warning");
     previousCard.innerHTML += 
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
+}
+
+function rewardCard() {
+    let rewardBox = document.getElementById('card' + (containerCount - 1));
+    rewardBox.classList.add("reward");
+    rewardBox.innerHTML += 
+    `<span class="position-absolute top-0 start-0 m-1">⭐</span>
+    <span class="position-absolute top-0 end-0 m-1">⭐</span>
+    <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
+    <span class="position-absolute bottom-0 end-0 m-1">⭐</span>
+    <div>
+        <h2>Rewards</h2>
+        <div class="row">
+            <div class="col-3">
+                <div class="card reward-item">
+                    <img src="img/items/spellbook.png" alt="">
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card reward-item">
+                    <img src="img/items/spellbook.png" alt="">
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card reward-item">
+                    <img src="img/items/spellbook.png" alt="">
+                </div>
+            </div>
+            <div class="col-3 mb-4">
+                <div class="card reward-item">
+                    <img src="img/items/spellbook.png" alt="">                    
+                </div>
+            </div>
+        </div>
+    </div>`
 }
 
 function disableButtons(container, clickedButton) {
