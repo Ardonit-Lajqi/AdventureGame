@@ -614,6 +614,13 @@ function handleSpecialActions(choice) {
                     });
                 }
                 break;
+            case "Summon demon":
+                updateStoryLogQueue(["As you follow the instructions in the book you successfully summon a demon."], function() {
+                    updateStoryLogQueue(["He thanks you for releasing him before attacking you."], function() {
+                        monsterBattle();
+                    });
+                });
+                break;
             case "Return to fight monster":
                 monsterBattle();
                 break;
