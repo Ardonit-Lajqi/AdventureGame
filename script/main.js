@@ -54,10 +54,16 @@ window.onscroll = function () {
 };
 
 function scrollFunction() {
-    if (document.body.scrollTop > 10 || document.documentElement.scrollTop > 10) {
+    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    
+    if (scrollTop + windowHeight >= docHeight) {
+        // User is at the bottom of the page, show arrow up
         toggleButton.style.display = "block";
         toggleButton.innerHTML = `<img src="img/icons/arrowUp.png" alt="scrollUp" style="width: 25px;">`;
     } else {
+        // User is not at the bottom, show arrow down
         toggleButton.style.display = "block";
         toggleButton.innerHTML = `<img src="img/icons/arrowDown.png" alt="scrollDown" style="width: 25px;">`;
     }
@@ -66,11 +72,16 @@ function scrollFunction() {
 toggleButton.addEventListener("click", toggleScroll);
 
 function toggleScroll() {
-    if (document.body.scrollTop > 10 || document.documentElement.scrollTop > 10) 
-    {
+    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+
+    if (scrollTop + windowHeight >= docHeight) {
+        // If at the bottom, scroll to the top
         document.body.scrollTop = 0;
         document.documentElement.scrollTop = 0;
     } else {
+        // If not at the bottom, scroll to the bottom
         window.scrollTo({
             top: document.body.scrollHeight,
             behavior: "smooth"
@@ -78,4 +89,4 @@ function toggleScroll() {
     }
 }
 
-
+window.onscroll = scrollFunction;
