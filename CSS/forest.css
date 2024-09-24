@@ -2,6 +2,8 @@
 
 html {
     scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #594236 #6F584B;
 }
 
 body {
@@ -10,6 +12,8 @@ body {
     letter-spacing: 2px;
     overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #594236 #6F584B;
 }
 
 .forest-sidebar {
@@ -180,6 +184,23 @@ body {
     color: white;
     border: 2px solid #FFD100;
     border-radius: 25px;
+}
+
+#btn-back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    background-color: #6F584B;
+    box-shadow: 3px 3px;
+  }
+
+  #btn-back-to-top:hover{
+    background-color: #594236;
+  }
+
+.shadow-box{
+    box-shadow: 3px 3px;
 }
 
 @media only screen and (max-width: 1500px) {
