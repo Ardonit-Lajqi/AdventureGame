@@ -10,6 +10,8 @@ let haveShoes = true;
 let trapdoorBroken = false;
 let haveRope = false;
 let createdContainers = [];
+let canUseRope = false;  // Add a flag to track if rope can be used
+let ropeOnTrapdoor = false;
 
 // Set initial game state
 main.setStamina(10);
@@ -52,7 +54,7 @@ window.onload = function() {
 
         // Load the cards in the correct order
         savedContainers.forEach(container => {
-            createStoryContainer(container.storyNodeKey, container.containerNumber);
+            createStoryContainer(container.storyNodeKey, container.containerNumber, container.chosenChoice);
         });
 
         // Set containerCount to the highest containerNumber + 1
@@ -62,23 +64,63 @@ window.onload = function() {
     } else {
         createStoryContainer('start');
     }
-
-    setupInventoryListeners();
+    setupInventory("rope", false);
 };
 
-function setupInventoryListeners() {
+function setupInventory(newItemId, removeItem) {
+    let itemBoxes = document.getElementsByClassName("inventory-item");
+
+    // Add new item to the first empty slot
+    Array.from(itemBoxes).some(item => {
+        if (!item.id && !removeItem) {
+            item.id = newItemId;
+            switch (newItemId) {
+                case "rope":
+                    item.innerHTML = '<img src="img/items/rope.png" alt="Rope">';
+                    haveRope = true;
+                    break;
+                case "spellbook":
+                    item.innerHTML = '<img src="img/items/spellbook.png" alt="Spellbook">';
+                    break;
+                case "sword":
+                    item.innerHTML = '<img  src="img/items/sword (4).png" alt="Sword">';
+                    break;
+                default:
+                    break;
+            }
+            console.log(`Item added to slot: ${item}`);
+            addClickEvent(item.id);
+            return true; // Stop after the first empty slot is found
+        } else if (item.id == newItemId && removeItem) {
+            item.id = "";
+            item.innerHTML = "";
+            return true;
+        }
+        return false;
+    });
+}
+
+// Setup click events for existing items
+function addClickEvent(itemId) {
     const items = [
         { id: 'sword', text: 'A rather rusted sword.' },
         { id: 'spellbook', text: 'A book filled with demonic magic. It states that with the following items you can summon a demon: Bottled soul, Black death plant, Bones, A ritual knife.' },
         { id: 'rope', text: 'An ordinary bundle of rope.' },
     ];
 
-    items.forEach(item => {
-        const itemClick = document.getElementById(item.id);
-        itemClick.addEventListener('click', function() {
-            updateStoryLog(item.text);
-        });
-    });
+    const itemData = items.find(i => i.id === itemId);
+    if (itemData) {
+        const itemElement = document.getElementById(itemData.id);
+        if (itemElement) {
+            itemElement.addEventListener('click', function() {
+                if (itemData.id === 'rope' && trapdoorBroken && canUseRope) {
+                    useRopeToAscend();
+                } else {
+                    updateStoryLog(itemData.text);
+                }
+            });
+        }
+    }
 }
 
 function clearSaveData() {
@@ -90,97 +132,119 @@ function clearSaveData() {
 // Make sure the clear button calls clearSaveData when clicked
 document.getElementById("clear").onclick = clearSaveData;
 
-function createStoryContainer(storyNodeKey, containerNumber = null) {
-    if (!storyNode[storyNodeKey]) {
-        console.error(`Story node "${storyNodeKey}" does not exist.`);
-        return;
-    }
+// Function to save container state
+function saveContainerState(storyNodeKey, containerNumber, pressedButton) {
+    let savedContainer = {
+        id: "card" + containerNumber,
+        storyNodeKey: storyNodeKey,
+        choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
+        chosenChoice: pressedButton, // Save the pressed button text
+        createdAt: new Date().toISOString(),
+        containerNumber: containerNumber
+    };
 
+    localStorage.setItem("container" + containerNumber, JSON.stringify(savedContainer));
+}
+
+function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null) {
+    if (!storyNode[storyNodeKey]) {
+      console.error(`Story node "${storyNodeKey}" does not exist.`);
+      return;
+    }
+  
     const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
     const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
     const container = document.createElement('div');
     container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
     container.id = "card" + currentContainerCount;
-
+  
     container.style.marginLeft = randomMarginLeft + "vh";
     container.style.width = "50vh";
     container.style.transform = `translateX(${randomMarginLeft}vh)`;
-
+  
     const questionTitle = document.createElement('h2');
     questionTitle.classList.add('text-center', 'text-light', 'mt-2');
     questionTitle.innerHTML = storyNode[storyNodeKey].question;
     container.appendChild(questionTitle);
-
+  
+    // Create and display the story text
     updateStoryLog(storyNode[storyNodeKey].text, function() {
-        const buttonContainer = document.createElement('div');
-        buttonContainer.classList.add('row', 'text-center', 'mt-3');
-        container.appendChild(buttonContainer);
-
-        storyNode[storyNodeKey].choices.forEach((choice) => {
-            const button = document.createElement('button');
-            button.textContent = choice.text;
-            button.classList.add('btn', 'button', 'm-2');
-
-            button.addEventListener('click', function () {
-                disableButtons(container, button);
-                if (choice.specialAction) {
-                    handleSpecialActions(choice);
-                } else {
-                    createStoryContainer(choice.next);
-                }
-            });
-
-            const buttonCol = document.createElement('div');
-            buttonCol.classList.add('col-4');
-            buttonCol.appendChild(button);
-            buttonContainer.appendChild(buttonCol);
-        });
-
-        // Add the new container to the createdContainers array
-        createdContainers.push(container);
-
-        // Append containers in order based on containerNumber
-        createdContainers.sort((a, b) => {
-            return parseInt(a.id.replace('card', '')) - parseInt(b.id.replace('card', ''));
-        });
-
-        // Clear the game element and reappend in order
-        const gameElement = document.getElementById('game');
-        gameElement.innerHTML = ''; // Clear existing cards
-        createdContainers.forEach(card => gameElement.appendChild(card));
-
-        if (currentContainerCount > 0) {
-            new LeaderLine(
-                document.getElementById('card' + (currentContainerCount - 1)),
-                document.getElementById('card' + currentContainerCount),
-                {
-                    path: 'grid',
-                    startSocket: 'bottom',
-                    endSocket: 'top',
-                    color: '#327117',
-                    size: 4,
-                    outline: false,
-                    dropShadow: true
-                }
-            );
+      const buttonContainer = document.createElement('div');
+      buttonContainer.classList.add('row', 'text-center', 'mt-3');
+      container.appendChild(buttonContainer);
+  
+      // Store the pressed button information
+      storyNode[storyNodeKey].choices.forEach((choice) => {
+        const button = document.createElement('button');
+        button.textContent = choice.text;
+        if (pressedButton !== null) {
+          button.disabled = true;
+          if (button.textContent == pressedButton) {
+            button.classList.add('btn', 'button', 'm-2', 'pressed');
+          } else {
+            button.classList.add('btn', 'button', 'm-2', 'disabled');
+          }
+        } else {
+          button.classList.add('btn', 'button', 'm-2');
         }
-        
-        // Save the created container to localStorage
-        let savedContainer = {
-            id: container.id,
-            storyNodeKey: storyNodeKey,
-            choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
-            createdAt: new Date().toISOString(),
-            containerNumber: currentContainerCount
-        };
-
-        localStorage.setItem("container" + currentContainerCount, JSON.stringify(savedContainer));
-
-        if (containerNumber === null) {
-            containerCount++;
-        }
+  
+        button.addEventListener('click', function () {
+          disableButtons(container, button);
+          if (!button.classList.contains('disabled')) {
+            pressedButton = button.textContent; // Get the text of the pressed button
+          }
+          saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+          if (choice.specialAction) {
+            handleSpecialActions(choice);
+          } else {
+            createStoryContainer(choice.next);
+          }
+        });
+  
+        // Check if this button should be the pressed button
+        const buttonCol = document.createElement('div');
+        buttonCol.classList.add('col-4');
+        buttonCol.appendChild(button);
+        buttonContainer.appendChild(buttonCol);
+      });
+  
+      // Add the new container to the createdContainers array
+      createdContainers.push(container);
+  
+      // Save the state of the container
+      saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+  
+      if (containerNumber === null) {
+        containerCount++;
+      }
+  
+      // Ensure containers are added in the correct order
+      createdContainers.sort((a, b) => a.id.localeCompare(b.id)); // Sort by container ID
+      const gameElement = document.getElementById('game');
+      gameElement.innerHTML = ''; // Clear existing cards
+      createdContainers.forEach(card => gameElement.appendChild(card));
+  
+      // Other existing code for leader lines or other functionalities...
+      if (currentContainerCount > 0) {
+        new LeaderLine(
+          document.getElementById('card' + (currentContainerCount - 1)),
+          document.getElementById('card' + currentContainerCount),
+          {
+            path: 'grid',
+            startSocket: 'bottom',
+            endSocket: 'top',
+            color: '#327117',
+            size: 4,
+            outline: false,
+            dropShadow: true
+          }
+        );
+      }
     });
-}
+  }
+
+
+
 
 
 
@@ -300,34 +364,61 @@ function handleSpecialActions(choice) {
                 break;
             case "Enter":
                 rand = Math.floor(Math.random() * 100);
-                updateStoryLog("You attempt to climb down the rickety ladder.", function() {
-                    setTimeout(function() {
-                        if (rand >= 50) {
-                            updateStoryLog("You successfully climb down.", function() {
-                                nextNode = "portal";
-                                createStoryContainer(nextNode);
-                            });
+                if (ropeOnTrapdoor) {
+                    updateStoryLog("You slide down the rope.", function() {
+                        nextNode = "portal";
+                        createStoryContainer(nextNode);
+                    });
+                } else {
+                    updateStoryLog("You attempt to climb down the rickety ladder.", function() {
+                        setTimeout(function() {
+                            if (rand >= 50) {
+                                updateStoryLog("You successfully climb down.", function() {
+                                    nextNode = "portal";
+                                    createStoryContainer(nextNode);
+                                });
+                            } else {
+                                updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
+                                    trapdoorBroken = true;
+                                    main.setHealth(main.health - 1);
+                                    nextNode = "portal";
+                                    createStoryContainer(nextNode);
+                                });
+                            }
+                        });
+                    });
+                }
+                break;
+                case "Leave circle":
+                    updateStoryLog("You go back to leave through the trapdoor", function() {
+                        if (ropeOnTrapdoor) {
+                            useRopeToAscend();
                         } else {
-                            updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
-                                main.setHealth(main.health - 1);
-                                nextNode = "portal";
-                                createStoryContainer(nextNode);
-                            });
+                            if (trapdoorBroken) {
+                                updateStoryLog("You realize that you broke the ladder during your entry", function() {
+                                    if (haveRope) {
+                                        updateStoryLog("You could use the rope to climb up.", function() {
+                                            canUseRope = true; // Allow the player to use the rope
+                                            setupInventory(null);
+                                        });
+                                    } else {
+                                        updateStoryLog("Without a rope, you can't climb up and are stuck down here.", function() {
+                                            updateStoryLog("After a few days you die from thirst.", function() {
+                                                nextNode = "dead";
+                                                createStoryContainer(nextNode);
+                                            });
+                                        });
+                                    }
+                                });
+                            } else {
+                                updateStoryLog("You climb back up the ladder", function() {
+                                    nextNode = "trapdoor";
+                                    createStoryContainer(nextNode);
+                                });
+                            }
                         }
                     });
-                });
-                break;
-            case "Leave circle":
-                updateStoryLog("You go back to leave through the trapdoor", function() {
-                    if (trapdoorBroken) {
-                        updateStoryLog("You realize that you broke the ladder during your entry", function() {
-                            // click rope
-                        });
-                    } else {
-                        // Handle the else case here if needed
-                    }
-                });
-                break;
+                    break;
             case "Return to fight monster":
                 monsterBattle();
                 break;
@@ -335,6 +426,15 @@ function handleSpecialActions(choice) {
     }
 
     createStoryContainer(nextNode);
+}
+
+function useRopeToAscend() {
+    ropeOnTrapdoor = true;
+    canUseRope = false;
+    setupInventory("rope", true);
+    updateStoryLog("You use the rope to climb through the broken trapdoor.", function() {
+        createStoryContainer("trapdoor");
+    });
 }
 
 function monsterBattle() {
