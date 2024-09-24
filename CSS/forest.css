@@ -186,18 +186,29 @@ body {
     border-radius: 25px;
 }
 
-#btn-back-to-top {
+#btn-toggle-scroll {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
     display: none;
     background-color: #6F584B;
-    box-shadow: 3px 3px;
-  }
+    padding: 10px;
+    cursor: pointer;
+    box-shadow: 4px 4px;
+    transition: background-color 1.5s
+}
 
-  #btn-back-to-top:hover{
+#btn-toggle-scroll:hover {
     background-color: #594236;
-  }
+    transform:scale(1.1);
+    transition: background-color 1.5s
+}
+
+#btn-toggle-scroll img {
+    width: 25px;
+    height: auto;
+}
 
 .shadow-box{
     box-shadow: 3px 3px;
