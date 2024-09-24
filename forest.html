@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="CSS/forest.css">
     <title>Forest</title>
 </head>
-<body class="custom-scrollbar">
+<body>
     
 
     <source src="sound/512634__klankbeeld__calm-forest-april-nl-kampina-01-200401_0141.flac" type="audio/ogg">
@@ -167,7 +167,6 @@
                 </div>
             </div>
 
-
             <!--What To Do (choices)-->
             <div class="col-8">
                 <div class="row">
@@ -178,6 +177,10 @@
                 </div>
             </div>  
         </div>
+
+    <button type="button" class="btn btn-floating btn-lg" id="btn-back-to-top">
+        <img src="img/icons/arrowUp.png" alt="scrollUp" style="width: 25px;">
+    </button>
     </section>
 
     <!-- Modal Config -->
@@ -189,7 +192,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Exit The Game?</p>
+                <p>Do You Wanna Clear Your Progress?</p> 
             </div>
             <div class="modal-footer">
                 <button id="clear" type="button" class="btn" data-bs-dismiss="modal" style="background-color: #6F584B; color: white;">Clear</button>
