@@ -2,6 +2,8 @@
 
 html {
     scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #594236 #6F584B;
 }
 
 body {
@@ -10,6 +12,8 @@ body {
     letter-spacing: 2px;
     overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #594236 #6F584B;
 }
 
 .forest-sidebar {
@@ -34,6 +38,11 @@ body {
 
 .progress {
     height: 25px;
+    border-radius: 0 5px 5px 0;
+}
+
+.progress-icon{
+    border-radius: 5px 0 0 5px;
 }
 
 .text-logs {
@@ -72,10 +81,11 @@ body {
     height: auto;
     background-color: #327117;
     transform: translateX(30vh);
-    margin-bottom: 6vh;
+    margin-bottom: 8vh;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
 .warning {
     border: 3px solid #A1142D;
     color: #A1142D;
@@ -84,6 +94,31 @@ body {
     font-family: sans-serif;
 }
 
+.reward {
+    border: 3px solid #FFD100;
+    font-size: 36px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+}
+
+.reward span{
+    font-size: 25px;
+}
+
+.reward-item{
+    background-color: #2B5917;
+    width: 8vh;
+    height: 8vh;
+    border: 2px solid #FFD100;
+    padding: 5px;
+    margin-top: 2vh;
+}
+
+.reward-item:hover {
+    border: 2px solid #cea800;
+    transform: scale(1.1);
+}
 
 .button {
     background-color: #2B5917;
@@ -120,6 +155,88 @@ body {
 
 .btn-close {
     background-color: #6F584B;
+}
+
+.fightCard{
+    transform: translateX(23vh);
+}
+
+.fightScene{
+    background-color: #594236;
+    width: 60vh;
+    margin-top: 10px;
+}
+
+.monster-lvl{
+    background-color: #6F584B;
+}
+
+.card-option{
+    background-color: #594236;
+    width: 60vh;
+}
+
+.btn-attack{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #A1142D;
+    border-radius: 25px;
+}
+
+.btn-block{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #38C75F;
+    border-radius: 25px;
+}
+
+.btn-block{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #0077B0;
+    border-radius: 25px;
+}
+
+.btn-flee{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #38C75F;
+    border-radius: 25px;
+}
+
+.btn-wait{
+    background-color: #6F584B;
+    color: white;
+    border: 2px solid #FFD100;
+    border-radius: 25px;
+}
+
+#btn-toggle-scroll {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    display: none;
+    background-color: #6F584B;
+    padding: 10px;
+    cursor: pointer;
+    box-shadow: 4px 4px;
+    transition: background-color 1.5s
+}
+
+#btn-toggle-scroll:hover {
+    background-color: #594236;
+    transform:scale(1.1);
+    transition: background-color 1.5s
+}
+
+#btn-toggle-scroll img {
+    width: 25px;
+    height: auto;
+}
+
+.shadow-box{
+    box-shadow: 3px 3px;
 }
 
 @media only screen and (max-width: 1500px) {
