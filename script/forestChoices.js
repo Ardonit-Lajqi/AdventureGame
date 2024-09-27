@@ -105,8 +105,8 @@ function createStoryContainer(storyNodeKey) {
                 createStoryContainer(choice.next); // If no special action, proceed to the next node
             }
         });
+    
         
-
         const buttonCol = document.createElement('div');
         buttonCol.classList.add('col-4');
         buttonCol.appendChild(button);
