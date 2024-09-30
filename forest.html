@@ -11,9 +11,9 @@
 </head>
 <body>
     
+    <source id="forest" src="sound/512634__klankbeeld__calm-forest-april-nl-kampina-01-200401_0141.flac" type="audio/ogg">
 
-    <source src="sound/512634__klankbeeld__calm-forest-april-nl-kampina-01-200401_0141.flac" type="audio/ogg">
-    
+
     <section>
         <div class="row">
             <div class="col-4">
@@ -21,13 +21,13 @@
                     <div class="row">
                         <div class="col-2">
                             <!--Configation button-->
-                                <button class="btn config" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                                <button class="btn config" data-bs-toggle="modal" data-bs-target="#staticBackdrop" onclick="btnPlay()">
                                     <img class="img-fluid" src="img/icons/configuration.png" alt="config" style="width: 100px;">
                                 </button>
                             </div>
 
                         <div class="col-10">
-                            <div class="card statbars mt-3 mx-3 shadow p-3">
+                            <div class="card statbars mt-3 mx-3 shadow p-3" data-aos="zoom-out">
                                 <!-- Health Bar -->
                                 <div class="row align-items-center g-0 mb-2">
                                   <div class="col-auto">
@@ -73,7 +73,7 @@
                         </div>
                     </div>
 
-                    <div class="container">
+                    <div class="container" data-aos="zoom-out">
                         <div class="row">
                             <div class="col-6">
                                 <div class="card mt-3 shadow" style="background-color: #6F584B;">
@@ -104,7 +104,7 @@
 
                     <!--Text Logs-->
                     <div class="container">
-                        <div class="card text-logs mt-4 text-light shadow overflow-auto custom-scrollbar p-2" id="text-log">
+                        <div class="card zoom-in text-logs mt-4 text-light shadow overflow-auto custom-scrollbar p-2" id="text-log">
                             <!-- <p id="textLog"></p>
                             <p class="old-logs">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>
                             <p class="">Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi, commodi!</p>  -->
@@ -189,15 +189,16 @@
           <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="translateModalLabel">configuration</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="btnPlay()"></button>
             </div>
             <div class="modal-body">
                 <label for="soundRange" class="form-label">Sound Setting</label>
-                <input type="range" class="form-range custom-range" min="0" max="100" id="soundRange">
+                <input type="range" class="form-range custom-range" min="0" max="100" id="soundRange" value="100" onclick="btnPlay()">
             </div>
             <div class="modal-footer">
-                <button id="clear" type="button" class="btn" data-bs-dismiss="modal" style="background-color: #6F584B; color: white;">Clear</button>
+                <button onclick="btnPlay()" id="clear" type="button" class="btn" data-bs-dismiss="modal" style="background-color: #6F584B; color: white;">Clear</button>
                 <button onclick="window.location.href='index.html'" type="button" class="btn" data-bs-dismiss="modal" style="background-color: #6F584B; color: white;">Exit</button>
+                <button type="button" class="btn" onclick="playForest()">Sound Test</button>
             </div>
           </div>
         </div>
@@ -208,10 +209,13 @@
       <script src="script/sounds.js"></script>
       <script src="library/anseki-leader-line-6c26a9d/leader-line.min.js "></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leader-line/1.0.7/leader-line.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
       <script src="script/forestStory.js"></script>
+      
+      <!--AOS Library-->
+      <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
       <script>
         AOS.init();
-      </script>      
+      </script>
+      
 </body>
 </html>
