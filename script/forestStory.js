@@ -86,8 +86,8 @@ export let storyNode = {
         text: "Do you want to attempt to summon a demon?",
         question: "What do you want to do",
         choices: [
-            { text: "Yes", specialAction: true },
-            { text: "No", next: "portal" }
+            { text: "Summon demon", specialAction: true },
+            { text: "Leave", next: "portal" }
         ]
     }
 };
