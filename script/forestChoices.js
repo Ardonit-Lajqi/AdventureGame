@@ -113,6 +113,7 @@ window.onload = function() {
         if (savedContainers.length > 0) {
             containerCount = Math.max(0, parseInt(savedContainers[savedContainers.length - 1].containerNumber) + 1);
         }
+        loadInventory();
     } else {
         createStoryContainer('start');
     }
@@ -121,8 +122,8 @@ window.onload = function() {
 function setupInventory(newItemId, removeItem = false) {
     let itemBoxes = document.getElementsByClassName("inventory-item");
 
-    // Add new item to the first empty slot or remove it if `removeItem` is true
-    Array.from(itemBoxes).some(item => {
+    // Add new item or remove it
+    let itemAddedOrRemoved = Array.from(itemBoxes).some(item => {
         if (!item.id && !removeItem) {
             // Assign the new item ID to the first empty slot
             item.id = newItemId;
@@ -148,8 +149,7 @@ function setupInventory(newItemId, removeItem = false) {
                 default:
                     break;
             }
-            console.log(`Item ${newItemId} added to inventory slot: ${item.id}`);
-            addClickEvent(item); // Pass the actual element to add the event listener
+            addClickEvent(item); // Add click event
             return true; // Stop after adding the item
         } else if (item.id == newItemId && removeItem) {
             // Remove the item if `removeItem` is true
@@ -159,7 +159,12 @@ function setupInventory(newItemId, removeItem = false) {
         }
         return false;
     });
+
+    if (itemAddedOrRemoved) {
+        saveInventory(); // Save inventory after modification
+    }
 }
+
 
 // Attach the click event to the inventory item element
 function addClickEvent(itemElement) {
@@ -245,6 +250,42 @@ function saveVaribles() {
 
     localStorage.setItem("variables", JSON.stringify(savedVarData));
 }
+
+function saveInventory() {
+    let itemBoxes = document.getElementsByClassName("inventory-item");
+    let inventoryData = [];
+
+    // Loop through all inventory slots and store the item IDs
+    Array.from(itemBoxes).forEach(item => {
+        if (item.id) {
+            inventoryData.push(item.id);
+        } else {
+            inventoryData.push(null); // Empty slot
+        }
+    });
+
+    // Save the inventory data in localStorage
+    localStorage.setItem("inventory", JSON.stringify(inventoryData));
+    console.log("Inventory saved:", inventoryData);
+}
+
+function loadInventory() {
+    let savedInventory = JSON.parse(localStorage.getItem("inventory"));
+    
+    if (savedInventory && savedInventory.length > 0) {
+        let itemBoxes = document.getElementsByClassName("inventory-item");
+
+        // Loop through saved inventory and set items in their respective slots
+        savedInventory.forEach((itemId, index) => {
+            if (itemId) {
+                setupInventory(itemId); // Use the setupInventory function to add the item
+            }
+        });
+        
+        console.log("Inventory loaded:", savedInventory);
+    }
+}
+
 
 function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null, loading = false) {
     if (!storyNode[storyNodeKey]) {
@@ -378,8 +419,6 @@ function updateStoryLogQueue(textArray, callback) {
 
     processNext();
 }
-
-let lastStoryLogTime = 0;
 
 function updateStoryLog(storyText, callback, speed = 30) {
     const logContainer = document.getElementById('text-log');
@@ -766,7 +805,6 @@ function warningCard() {
 }
 
 function rewardCard() {
-    let beforeRewardBox = document.getElementById('card' + (containerCount - 2));
     let rewardBox = document.getElementById('card' + (containerCount - 1));
     rewardBox.classList.add("reward");
 
