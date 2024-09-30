@@ -30,6 +30,8 @@ let haveRitualKnife = false;
 
 let haveSword = false;
 
+let rewardItem = [];
+
 let containerCount = 0;
 let createdContainers = [];
 
@@ -111,71 +113,84 @@ window.onload = function() {
         if (savedContainers.length > 0) {
             containerCount = Math.max(0, parseInt(savedContainers[savedContainers.length - 1].containerNumber) + 1);
         }
+        loadInventory();
     } else {
         createStoryContainer('start');
     }
 };
 
-function setupInventory(newItemId, removeItem) {
+function setupInventory(newItemId, removeItem = false) {
     let itemBoxes = document.getElementsByClassName("inventory-item");
 
-    // Add new item to the first empty slot
-    Array.from(itemBoxes).some(item => {
+    // Add new item or remove it
+    let itemAddedOrRemoved = Array.from(itemBoxes).some(item => {
         if (!item.id && !removeItem) {
+            // Assign the new item ID to the first empty slot
             item.id = newItemId;
             switch (newItemId) {
                 case "rope":
-                    item.innerHTML = '<img src="img/items/rope.png" alt="Rope">';
+                    item.innerHTML = '<img src="img/items/rope.png" alt="rope">';
                     haveRope = true;
                     break;
                 case "spellbook":
-                    item.innerHTML = '<img src="img/items/spellbook.png" alt="Spellbook">';
+                    item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook">';
                     haveBook = true;
                     break;
                 case "sword":
-                    item.innerHTML = '<img src="img/items/sword (4).png" alt="Sword">';
+                    item.innerHTML = '<img src="img/items/sword.png" alt="sword">';
                     haveSword = true;
+                    break;
+                case "glassBottle":
+                    item.innerHTML = '<img src="img/items/glassBottle.png" alt="glassBottle">';
+                    break;
+                case "magicPotion":
+                    item.innerHTML = '<img src="img/items/magicPotion.png" alt="magicPotion">';
                     break;
                 default:
                     break;
             }
-            console.log(`Item added to slot: ${item}`);
-            addClickEvent(item.id);
-            return true; // Stop after the first empty slot is found
+            addClickEvent(item); // Add click event
+            return true; // Stop after adding the item
         } else if (item.id == newItemId && removeItem) {
+            // Remove the item if `removeItem` is true
             item.id = "";
             item.innerHTML = "";
             return true;
         }
         return false;
     });
+
+    if (itemAddedOrRemoved) {
+        saveInventory(); // Save inventory after modification
+    }
 }
 
-// Setup click events for existing items
-function addClickEvent(itemId) {
+
+// Attach the click event to the inventory item element
+function addClickEvent(itemElement) {
     const items = [
         { id: 'sword', text: 'A rather rusted sword.' },
         { id: 'spellbook', text: 'A book filled with demonic magic. It states that with the following items you can summon a demon: Bottled soul, Black death plant, Bones, A ritual knife.' },
         { id: 'rope', text: 'An ordinary bundle of rope.' },
+        { id: 'glassBottle', text: 'A plain glass bottle.' },
+        { id: 'magicPotion', text: 'A empty potion flask.' }
     ];
 
-    const itemData = items.find(i => i.id === itemId);
+    const itemData = items.find(i => i.id === itemElement.id);
     if (itemData) {
-        const itemElement = document.getElementById(itemData.id);
-        if (itemElement) {
-            itemElement.addEventListener('click', function() {
-                if (itemData.id === 'rope' && trapdoorBroken && canUseRope) {
-                    useRopeToAscend();
-                } else if (itemData.id === 'spellbook') {
-                    readBook = true;
-                    updateStoryLog(itemData.text);
-                } else {
-                    updateStoryLog(itemData.text);
-                }
-            });
-        }
+        itemElement.addEventListener('click', function() {
+            if (itemData.id === 'rope' && trapdoorBroken && canUseRope) {
+                useRopeToAscend();
+            } else if (itemData.id === 'spellbook') {
+                readBook = true;
+                updateStoryLog(itemData.text);
+            } else {
+                updateStoryLog(itemData.text);
+            }
+        });
     }
 }
+
 
 function clearSaveData() {
     localStorage.clear();  // Clear local storage
@@ -235,6 +250,43 @@ function saveVaribles() {
 
     localStorage.setItem("variables", JSON.stringify(savedVarData));
 }
+
+function saveInventory() {
+    let itemBoxes = document.getElementsByClassName("inventory-item");
+    let inventoryData = [];
+
+    // Loop through all inventory slots and store the item IDs
+    Array.from(itemBoxes).forEach(item => {
+        if (item.id) {
+            inventoryData.push(item.id);
+        } else {
+            inventoryData.push(null); // Empty slot
+        }
+    });
+
+    // Save the inventory data in localStorage
+    localStorage.setItem("inventory", JSON.stringify(inventoryData));
+    console.log("Inventory saved:", inventoryData);
+}
+
+function loadInventory() {
+    let savedInventory = JSON.parse(localStorage.getItem("inventory"));
+    
+    if (savedInventory && savedInventory.length > 0) {
+        let itemBoxes = document.getElementsByClassName("inventory-item");
+
+        // Loop through saved inventory and set items in their respective slots
+        savedInventory.forEach((itemId, index) => {
+            if (itemId) {
+                setupInventory(itemId); // Use the setupInventory function to add the item
+            }
+        });
+        
+        console.log("Inventory loaded:", savedInventory);
+    }
+}
+
+
 
 function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null, loading = false) {
     if (!storyNode[storyNodeKey]) {
@@ -513,6 +565,7 @@ function handleSpecialActions(choice) {
                 if (!searchedHut) {
                     searchedHut = true;
                     updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
+                        randomItems("hut");
                         rewardCard();
                         nextNode = "trapdoor";
                         createStoryContainer(nextNode);
@@ -631,6 +684,42 @@ function handleSpecialActions(choice) {
     createStoryContainer(nextNode);
 }
 
+function randomItems(category) {
+    let numb = 4; // Number of possible reward types
+    let minItems = 1; // Ensure at least one item is added
+    let maxItems = 4; // Maximum number of items you want to add
+
+    switch (category) {
+        case "hut":
+            // Generate a random number between 1 and maxItems (at least one item)
+            let rand = Math.floor(Math.random() * (maxItems - minItems + 1)) + minItems;
+
+            for (let index = 0; index < rand; index++) {
+                let newRand = Math.floor(Math.random() * numb) + 1; // Generate random item (1 to numb)
+
+                // Add items based on random number
+                switch (newRand) {
+                    case 1:
+                        rewardItem.push("rope");
+                        break;
+                    case 2:
+                        rewardItem.push("sword");
+                        break;
+                    case 3:
+                        rewardItem.push("glassBottle");
+                        break;
+                    case 4:
+                        rewardItem.push("magicPotion");
+                        break;
+                }
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+
 function useRopeToAscend() {
     ropeOnTrapdoor = true;
     canUseRope = false;
@@ -719,39 +808,62 @@ function warningCard() {
 }
 
 function rewardCard() {
+    let beforeRewardBox = document.getElementById('card' + (containerCount - 2));
     let rewardBox = document.getElementById('card' + (containerCount - 1));
     rewardBox.classList.add("reward");
-    rewardBox.innerHTML += 
-    `<span class="position-absolute top-0 start-0 m-1">⭐</span>
+
+    rewardBox.innerHTML += `
+    <span class="position-absolute top-0 start-0 m-1">⭐</span>
     <span class="position-absolute top-0 end-0 m-1">⭐</span>
     <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
     <span class="position-absolute bottom-0 end-0 m-1">⭐</span>
     <div>
         <h2>Rewards</h2>
-        <div class="row">
-            <div class="col-3">
-                <div class="card reward-item">
-                    <img src="img/items/spellbook.png" alt="">
-                </div>
-            </div>
-            <div class="col-3">
-                <div class="card reward-item">
-                    <img src="img/items/spellbook.png" alt="">
-                </div>
-            </div>
-            <div class="col-3">
-                <div class="card reward-item">
-                    <img src="img/items/spellbook.png" alt="">
-                </div>
-            </div>
-            <div class="col-3 mb-4">
-                <div class="card reward-item">
-                    <img src="img/items/spellbook.png" alt="">                    
-                </div>
-            </div>
+        <div id="rewardBox" class="row">
         </div>
-    </div>`
+    </div>`;
+
+    let rewardInventory = document.getElementById('rewardBox');
+
+    // Dynamically create and append reward items
+    rewardItem.forEach(item => {
+        let rewardElement = document.createElement('div');
+        rewardElement.classList.add('col-3');
+        
+        // Dynamically create the inner HTML based on the item
+        rewardElement.innerHTML = `
+            <div class="card reward-item">
+                <img src="img/items/${item}.png" alt="${item}" id="${item}">
+            </div>`;
+        
+        // Append reward item to reward inventory
+        rewardInventory.appendChild(rewardElement);
+        
+        // Define the event listener function
+        const rewardClickHandler = function() {
+            // Add item to inventory
+            setupInventory(item);
+
+            // Clear the content of the clicked reward item
+            rewardElement.innerHTML = `
+            <div class="card reward-item">
+            </div>`;
+
+            // Remove the event listener after the click
+            rewardElement.removeEventListener('click', rewardClickHandler);
+        };
+
+        // Attach event listener programmatically
+        rewardElement.addEventListener('click', rewardClickHandler);
+    });
+
+    // Clear rewardItem array after processing
+    rewardItem = [];
 }
+
+
+
+
 
 function disableButtons(container, clickedButton) {
     const buttons = container.querySelectorAll('button');
