@@ -297,9 +297,8 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
     const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
     const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
     const container = document.createElement('div');
-    container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
+    container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4', 'ani');
     container.id = "card" + currentContainerCount;
-    container.setAttribute('data-aos', 'zoom-in');
   
     container.style.marginLeft = randomMarginLeft + "vh";
     container.style.width = "50vh";
@@ -402,6 +401,10 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
 
             }
         }
+    });
+    //animation
+    container.addEventListener('animationend', () => {
+        container.classList.remove('ani');
     });
 }
 
