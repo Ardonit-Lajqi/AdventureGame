@@ -287,7 +287,6 @@ function loadInventory() {
 }
 
 
-
 function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null, loading = false) {
     if (!storyNode[storyNodeKey]) {
         console.error(`Story node "${storyNodeKey}" does not exist.`);
@@ -424,8 +423,6 @@ function updateStoryLogQueue(textArray, callback) {
 
     processNext();
 }
-
-let lastStoryLogTime = 0;
 
 function updateStoryLog(storyText, callback, speed = 30) {
     const logContainer = document.getElementById('text-log');
@@ -812,7 +809,6 @@ function warningCard() {
 }
 
 function rewardCard() {
-    let beforeRewardBox = document.getElementById('card' + (containerCount - 2));
     let rewardBox = document.getElementById('card' + (containerCount - 1));
     rewardBox.classList.add("reward");
 
