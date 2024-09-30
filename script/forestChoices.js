@@ -299,6 +299,7 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
     const container = document.createElement('div');
     container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
     container.id = "card" + currentContainerCount;
+    container.setAttribute('data-aos', 'zoom-in');
   
     container.style.marginLeft = randomMarginLeft + "vh";
     container.style.width = "50vh";

@@ -157,6 +157,24 @@ body {
     background-color: #6F584B;
 }
 
+.custom-range {
+    width: 100%;
+    background: black;
+    border: 1px solid black;
+    height: 12px;
+    border-radius: 5px;
+  }
+  
+  .custom-range::-webkit-slider-thumb {
+    background-color: #6F584B;
+    border: 1px solid black;
+    cursor: pointer;
+  }
+  
+  .custom-range:focus::-webkit-slider-thumb {
+    background-color: #594236;
+  }
+
 .fightCard{
     transform: translateX(23vh);
 }
@@ -180,13 +198,6 @@ body {
     background-color: #6F584B;
     color: white;
     border: 2px solid #A1142D;
-    border-radius: 25px;
-}
-
-.btn-block{
-    background-color: #6F584B;
-    color: white;
-    border: 2px solid #38C75F;
     border-radius: 25px;
 }
 
