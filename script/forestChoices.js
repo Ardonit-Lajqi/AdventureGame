@@ -31,6 +31,7 @@ let haveRitualKnife = false;
 let haveSword = false;
 
 let rewardItem = [];
+let rewardedItemsLeft = [];
 
 let containerCount = 0;
 let createdContainers = [];
@@ -209,7 +210,8 @@ function saveContainerState(storyNodeKey, containerNumber, pressedButton) {
         choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
         chosenChoice: pressedButton, // Save the pressed button text
         createdAt: new Date().toISOString(),
-        containerNumber: parseInt(containerNumber) // Store containerNumber as an integer
+        containerNumber: parseInt(containerNumber), // Store containerNumber as an integer
+        rewards: rewardedItemsLeft
     };
   
     localStorage.setItem("container" + containerNumber, JSON.stringify(savedContainer));
@@ -336,7 +338,7 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
                 }
                 saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
                 if (choice.specialAction) {
-                    handleSpecialActions(choice);
+                    handleSpecialActions(choice, pressedButton);
                 } else {
                     createStoryContainer(choice.next);
                 }
@@ -353,6 +355,7 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
         createdContainers.push({ container, containerNumber: currentContainerCount });
   
         // Save the state of the container
+        updateRewardedItemsLeft(storyNodeKey, currentContainerCount, pressedButton);
         saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
         saveStats();
         saveVaribles();
@@ -460,7 +463,7 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
     }
 }
 
-function handleSpecialActions(choice) {
+function handleSpecialActions(choice, pressedButton) {
     let nextNode = choice.next;
 
     if (choice.specialAction) {
@@ -567,7 +570,7 @@ function handleSpecialActions(choice) {
                     searchedHut = true;
                     updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
                         randomItems("hut");
-                        rewardCard();
+                        rewardCard(choice, pressedButton);
                         nextNode = "trapdoor";
                         createStoryContainer(nextNode);
                     });
@@ -808,11 +811,13 @@ function warningCard() {
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
 }
 
-function rewardCard() {
-    let rewardBox = document.getElementById('card' + (containerCount - 1));
-    rewardBox.classList.add("reward");
+function rewardCard(storyNodeKey, pressedButton) {
+    let previousCard = document.getElementById('card' + (containerCount - 1));
+    previousCard.classList.add("reward");
 
-    rewardBox.innerHTML += `
+    let rewardId = (containerCount-1);
+
+    previousCard.innerHTML += `
     <span class="position-absolute top-0 start-0 m-1">⭐</span>
     <span class="position-absolute top-0 end-0 m-1">⭐</span>
     <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
@@ -851,18 +856,38 @@ function rewardCard() {
 
             // Remove the event listener after the click
             rewardElement.removeEventListener('click', rewardClickHandler);
+            
+            // Update the rewardedItemsLeft after an item is clicked
+            updateRewardedItemsLeft(storyNodeKey, rewardId, pressedButton);
         };
 
         // Attach event listener programmatically
         rewardElement.addEventListener('click', rewardClickHandler);
     });
 
+    // Initially update rewardedItemsLeft when the rewards are set
+    updateRewardedItemsLeft(storyNodeKey, rewardId, pressedButton);
+
     // Clear rewardItem array after processing
     rewardItem = [];
 }
 
 
+function updateRewardedItemsLeft(storyNodeKey, rewardId, pressedButton) {
+    rewardedItemsLeft = []; // Clear previous entries
+    const rewardedItems = document.getElementsByClassName("reward-item");
 
+    // Loop through the original reward items to find which are still displayed
+    rewardItem.forEach(item => {
+        const imgElement = document.getElementById(item);
+        if (imgElement && imgElement.parentNode) { // Check if the image element still exists
+            rewardedItemsLeft.push(item); // Add unclicked item to the array
+        }
+    });
+
+    // Debugging: Check the values before calling saveContainerState
+    saveContainerState("inHut", rewardId, pressedButton);
+}
 
 
 function disableButtons(container, clickedButton) {
