@@ -320,7 +320,7 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
     const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
     const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
     const container = document.createElement('div');
-    container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4');
+    container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4', 'ani');
     container.id = "card" + currentContainerCount;
 
     container.style.marginLeft = randomMarginLeft + "vh";
@@ -439,6 +439,10 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
                 );
             }
         }
+    });
+    //animation
+    container.addEventListener('animationend', () => {
+        container.classList.remove('ani');
     });
 }
 
