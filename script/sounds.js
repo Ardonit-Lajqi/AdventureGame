@@ -13,6 +13,8 @@ function btnPlay() {
 }
 
 const forestSound = new Audio('./sound/Forest-sound.flac');
+export const ladderBreak = new Audio('./sound/effects/ladderBreak.mp3');
+const ropeThrowUp = new Audio('');
 
         function playForest() {
             // Check if the audio is not already playing
@@ -32,10 +34,24 @@ const forestSound = new Audio('./sound/Forest-sound.flac');
         // Volume control
         const soundRange = document.getElementById('soundRange');
 
-        // Set initial volume to maximum
-        forestSound.volume = 1.0; // Volume ranges from 0.0 to 1.0
+        const savedVolume = localStorage.getItem('forestSoundVolume');
+        forestSound.volume = savedVolume !== null ? savedVolume : 1.0;  // Set volume
+        soundRange.value = forestSound.volume * 100; // Update slider position
+
+        window.addEventListener('load', function () {
+            const savedVolume = localStorage.getItem('forestSoundVolume');
+            if (savedVolume !== null) {
+                forestSound.volume = savedVolume;
+                soundRange.value = savedVolume * 100; // Update slider position
+            } else {
+                forestSound.volume = 1.0;  // Default to maximum volume
+                soundRange.value = 100;    // Set slider to 100
+            }
+            playForest(); // Start playing the sound after the volume is set
+        });
 
         // Update volume based on slider value
         soundRange.addEventListener('input', function() {
             forestSound.volume = soundRange.value / 100;
-        }); 
+            localStorage.setItem('forestSoundVolume', forestSound.volume);  // Save volume
+        });
