@@ -1,5 +1,6 @@
 import * as main from './main.js';
 import { storyNode } from './forestStory.js';
+import { ladderBreak } from './sounds.js';
 
 let searchedHut = false;
 let searchedCircle = false;
@@ -594,6 +595,7 @@ function handleSpecialActions(choice, pressedButton) {
                                     createStoryContainer(nextNode);
                                 });
                             } else {
+                                ladderBreak.play();
                                 updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
                                     trapdoorBroken = true;
                                     main.setHealth(main.health - 1);
