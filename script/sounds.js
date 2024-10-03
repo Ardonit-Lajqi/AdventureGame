@@ -38,6 +38,20 @@ const deepForestSound = new Audio('./sound/Deep-forest-sound.wav');
             forestSound.play();           // Play again
         });
 
+
+        function playDeepForest() {
+            if (deepForestSound.paused) {
+                deepForestSound.play().catch(error => {
+                    console.error("Deep Forest failed to play: ", error);
+                });
+            }
+        }
+
+        deepForestSound.addEventListener('ended', function() {
+            deepForestSound.currentTime = 0;
+            deepForestSound.play();
+        });
+
         // Volume control
         const soundRange = document.getElementById('soundRange');
 
