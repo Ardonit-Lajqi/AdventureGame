@@ -40,16 +40,19 @@ let createdContainers = [];
 
 let storyNodeKey = "";
 
+let gamePaused = false;
+
 // Set initial game state
 main.setStamina(10);
 main.setHealth(10);
 main.setMana(10);
 main.setWanted(0);
 main.setCoins(0);
+let savedContainers = [];
 
 window.onload = function() {
     if (localStorage.length !== 0) {
-        let savedContainers = [];
+
   
         // Iterate over all items in localStorage
         for (let i = 0; i < localStorage.length; i++) {
@@ -121,10 +124,6 @@ window.onload = function() {
         savedContainers.forEach(container => {
             storyNodeKey = container.cardKey;
             createStoryContainer(container.containerNumber, container.chosenChoice, true);
-            if (container.specialCard === "reward") {
-                containerCount = container.containerNumber;
-                rewardCard(container.chosenChoice, true);
-            }
         });
   
         // Set containerCount to the highest containerNumber + 1
@@ -213,7 +212,6 @@ function addClickEvent(itemElement) {
 
 function clearSaveData() {
     localStorage.clear();  // Clear local storage
-    console.log("All saved data has been cleared.");
     window.location.reload();  // Reload the site
 }
 
@@ -397,6 +395,8 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
 
     if (!loading) {
         saveContainerState(currentContainerCount, pressedButton, [], ""); // Reset special state for the next container
+        saveStats();
+        saveVaribles();
     }
 
     if (containerNumber === null) {
@@ -422,7 +422,7 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
                     dropShadow: true
                 }
             );
-        } else if (currentContainerCount > 0 && loading) {
+        } else if (currentContainerCount > 0 && loading && currentContainerCount == (savedContainers.length-1)) {
             for (let index = 1; index < containerCount; index++) {
                 new LeaderLine(
                     document.getElementById('card' + (index - 1)),
@@ -446,6 +446,18 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
     });
 }
 
+
+
+function pauseGame() {
+    gamePaused = true;
+    // You can also add other elements you want to disable
+    // e.g. disable click events on certain elements, etc.
+}
+
+function resumeGame() {
+    gamePaused = false;
+    // Re-enable other interactions here if needed
+}
 
 
 function updateStoryLogQueue(textArray, callback) {
@@ -478,16 +490,25 @@ function updateStoryLog(storyText, callback, speed = 30) {
     logContainer.appendChild(logEntry);
 
     let p = 0;
+    
+    // Pause the game when starting the typewriter effect
+    pauseGame();
+
+    // Update the text using the typewriter effect
     typeWriter(storyText, speed, p, logEntry, function() {
+        // Once the typewriter finishes, resume the game after a short delay
         setTimeout(() => {
+            resumeGame();  // Resume game flow here
+
             if (callback) {
-                callback();
+                callback();  // Call the provided callback function
             }
-        }, 250);
+        }, 250);  // You can adjust the delay here
     });
 
     logContainer.scrollTop = logContainer.scrollHeight;
 }
+
 
 function typeWriter(txt, speed, p, logEntry, onComplete) {
     if (p < txt.length) {
@@ -497,7 +518,7 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
             typeWriter(txt, speed, p, logEntry, onComplete);
         }, speed);
     } else if (onComplete) {
-        onComplete();
+        onComplete();  // Call onComplete when typing is done
     }
 }
 
@@ -854,7 +875,7 @@ function warningCard() {
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
 }
 
-function rewardCard(pressedButton, currentCard = false) {
+function rewardCard(pressedButton) {
         console.log(containerCount, 'current count');
 
         let previousCard = document.getElementById('card' + (containerCount - 1));
@@ -914,6 +935,7 @@ function rewardCard(pressedButton, currentCard = false) {
                 // Reset reward state when all items are claimed
                 if (rewardedItemsLeft.length === 0) {
                     resetRewardState(); // Reset the global state
+                    return;
                 }
             };
             
@@ -927,30 +949,11 @@ function rewardCard(pressedButton, currentCard = false) {
         saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
 }
 
-
 function resetRewardState() {
     rewardItem = []; // Clear reward items
     rewardedItemsLeft = []; // Clear rewarded items left
     isSpecialCard = ""; // Reset special card status
 }
-
-
-function updateRewardedItemsLeft(rewardId, pressedButton) {
-    rewardedItemsLeft = []; // Clear previous entries
-    const rewardedItems = document.getElementsByClassName("reward-item");
-
-    // Loop through the original reward items to find which are still displayed
-    rewardItem.forEach(item => {
-        const imgElement = document.getElementById(item);
-        if (imgElement && imgElement.parentNode) { // Check if the image element still exists
-            rewardedItemsLeft.push(item); // Add unclicked item to the array
-        }
-    });
-
-    // Debugging: Check the values before calling saveContainerState
-    saveContainerState(rewardId, pressedButton);
-}
-
 
 function disableButtons(container, clickedButton) {
     const buttons = container.querySelectorAll('button');
@@ -963,13 +966,3 @@ function disableButtons(container, clickedButton) {
         }
     });
 }
-
-/*
-// Usage example
-updateStoryLog("You enter the dark forest, and hear rustling sounds.", function() {
-    updateStoryLog("Your heart races as you take a cautious step forward.", function() {
-        // Continue with the next actions here
-        console.log("Next action can proceed here.");
-    });
-});
-*/
