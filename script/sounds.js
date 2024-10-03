@@ -7,14 +7,21 @@ function playForest(){
 */
 
 const buttonClick = new Audio('./sound/ClickSound.mp3');
+const pickUp = new Audio('./sound/effects/inventory.mp3');
 
 function btnPlay() {
     buttonClick.play();
 }
 
+function invPickUp(){
+    pickUp.play();
+}
+
 const forestSound = new Audio('./sound/Forest-sound.flac');
-export const ladderBreak = new Audio('./sound/effects/ladderBreak.mp3');
-const ropeThrowUp = new Audio('');
+const ladderBreak = new Audio('./sound/effects/ladderBreak.mp3');
+const ropeThrowUp = new Audio('.sound/effects/ropeThrowAndAttach.mp3');
+const jail = new Audio('./sound/effects/prison.mp3');
+const deepForestSound = new Audio('./sound/Deep-forest-sound.wav');
 
         function playForest() {
             // Check if the audio is not already playing
