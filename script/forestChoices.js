@@ -30,11 +30,17 @@ let haveRitualKnife = false;
 
 let haveSword = false;
 
+let isSpecialCard = "";
+
 let rewardItem = [];
 let rewardedItemsLeft = [];
 
 let containerCount = 0;
 let createdContainers = [];
+
+let storyNodeKey = "";
+
+let gamePaused = false;
 
 // Set initial game state
 main.setStamina(10);
@@ -42,10 +48,11 @@ main.setHealth(10);
 main.setMana(10);
 main.setWanted(0);
 main.setCoins(0);
+let savedContainers = [];
 
 window.onload = function() {
     if (localStorage.length !== 0) {
-        let savedContainers = [];
+
   
         // Iterate over all items in localStorage
         for (let i = 0; i < localStorage.length; i++) {
@@ -64,11 +71,18 @@ window.onload = function() {
                 }
   
                 // Ensure we have valid card data
-                if (parsedValue && parsedValue.storyNodeKey && parsedValue.containerNumber !== undefined) {
+                if (parsedValue && parsedValue.cardKey && parsedValue.containerNumber !== undefined) {
                     savedContainers.push(parsedValue);
                 } else {
                     console.error("Invalid card data found in localStorage:", parsedValue);
                 }
+
+                // If this card had rewards, restore the reward state
+                if (parsedValue.rewards && parsedValue.rewards.length > 0) {
+                    rewardedItemsLeft = [...parsedValue.rewards];
+                    isSpecialCard = parsedValue.specialCard || "";
+                }
+
             } else if (key.startsWith("stats")) {
                 let savedStats = JSON.parse(localStorage.getItem("stats"));
                 if (savedStats) {
@@ -104,10 +118,12 @@ window.onload = function() {
   
         // Sort saved containers by their containerNumber (as numbers, not strings)
         savedContainers.sort((a, b) => a.containerNumber - b.containerNumber);
+        console.log(savedContainers);
   
         // Load the cards in the correct order
         savedContainers.forEach(container => {
-            createStoryContainer(container.storyNodeKey, container.containerNumber, container.chosenChoice, true);
+            storyNodeKey = container.cardKey;
+            createStoryContainer(container.containerNumber, container.chosenChoice, true);
         });
   
         // Set containerCount to the highest containerNumber + 1
@@ -116,7 +132,8 @@ window.onload = function() {
         }
         loadInventory();
     } else {
-        createStoryContainer('start');
+        storyNodeKey = "start";
+        createStoryContainer();
     }
 };
 
@@ -195,7 +212,6 @@ function addClickEvent(itemElement) {
 
 function clearSaveData() {
     localStorage.clear();  // Clear local storage
-    console.log("All saved data has been cleared.");
     window.location.reload();  // Reload the site
 }
 
@@ -203,19 +219,23 @@ function clearSaveData() {
 document.getElementById("clear").onclick = clearSaveData;
 
 // Function to save container state
-function saveContainerState(storyNodeKey, containerNumber, pressedButton) {
+function saveContainerState(containerNumber, pressedButton, rewards = [], specialCard = "") {
     let savedContainer = {
         id: "card" + containerNumber,
-        storyNodeKey: storyNodeKey,
+        cardKey: storyNodeKey,
         choices: JSON.parse(JSON.stringify(storyNode[storyNodeKey].choices)),
         chosenChoice: pressedButton, // Save the pressed button text
         createdAt: new Date().toISOString(),
         containerNumber: parseInt(containerNumber), // Store containerNumber as an integer
-        rewards: rewardedItemsLeft
+        rewards: rewards, // Pass in the specific rewards for this card
+        specialCard: specialCard // Pass in the special card status for this card
     };
-  
+
     localStorage.setItem("container" + containerNumber, JSON.stringify(savedContainer));
 }
+
+
+
 
 function saveStats() {
     let saveData = {
@@ -289,88 +309,105 @@ function loadInventory() {
 }
 
 
-function createStoryContainer(storyNodeKey, containerNumber = null, pressedButton = null, loading = false) {
+function createStoryContainer(containerNumber = null, pressedButton = null, loading = false) {
     if (!storyNode[storyNodeKey]) {
         console.error(`Story node "${storyNodeKey}" does not exist.`);
         return;
     }
-  
+    
     const currentContainerCount = containerNumber !== null ? containerNumber : containerCount;
     const randomMarginLeft = Math.floor(Math.random() * 20) + 10;
     const container = document.createElement('div');
     container.classList.add('card', 'card-question', 'shadow', 'mt-5', 'p-4', 'ani');
     container.id = "card" + currentContainerCount;
-  
+
     container.style.marginLeft = randomMarginLeft + "vh";
     container.style.width = "50vh";
     container.style.transform = `translateX(${randomMarginLeft}vh)`;
-  
+
     const questionTitle = document.createElement('h2');
     questionTitle.classList.add('text-center', 'text-light', 'mt-2');
     questionTitle.innerHTML = storyNode[storyNodeKey].question;
     container.appendChild(questionTitle);
-  
-    // Create and display the story text
-    updateStoryLog(storyNode[storyNodeKey].text, function() {
-        const buttonContainer = document.createElement('div');
-        buttonContainer.classList.add('row', 'text-center', 'mt-3');
-        container.appendChild(buttonContainer);
-  
-        // Store the pressed button information
-        storyNode[storyNodeKey].choices.forEach((choice) => {
-            const button = document.createElement('button');
-            button.textContent = choice.text;
-            if (pressedButton !== null) {
-                button.disabled = true;
-                if (button.textContent == pressedButton) {
-                    button.classList.add('btn', 'button', 'm-2', 'pressed');
-                } else {
-                    button.classList.add('btn', 'button', 'm-2', 'disabled');
-                }
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('row', 'text-center', 'mt-3');
+    container.appendChild(buttonContainer);
+
+    // Load saved container state if loading
+    let savedContainer = null;
+    if (loading) {
+        savedContainer = JSON.parse(localStorage.getItem("container" + currentContainerCount));
+        pressedButton = savedContainer ? savedContainer.chosenChoice : null; // Load the pressed button state
+    }
+    
+
+    storyNode[storyNodeKey].choices.forEach((choice) => {
+        const button = document.createElement('button');
+        button.textContent = choice.text;
+    
+        // Initialize button classes
+        button.classList.add('btn', 'button', 'm-2'); // Add base button classes
+    
+        // Set button state based on pressedButton and existing state
+        if (loading && savedContainer) {
+            if (choice.text === pressedButton) {
+                button.classList.add('pressed'); // Add pressed class if this is the chosen button
+                button.disabled = true; // Disable the button if it's not pressed
+            } else if (pressedButton === null) {
+                // Do not disable buttons if chosenChoice is null
+                button.classList.remove('disabled'); // Ensure it’s not marked as disabled
+                button.disabled = false; // Enable the button
             } else {
-                button.classList.add('btn', 'button', 'm-2');
+                button.classList.add('disabled'); // Add disabled class if it’s not the pressed button
+                button.disabled = true; // Disable the button if it's not pressed
             }
-  
-            button.addEventListener('click', function () {
-                disableButtons(container, button);
-                if (!button.classList.contains('disabled')) {
-                    pressedButton = button.textContent; // Get the text of the pressed button
-                }
-                saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
-                if (choice.specialAction) {
-                    handleSpecialActions(choice, pressedButton);
-                } else {
-                    createStoryContainer(choice.next);
-                }
-            });
-  
-            // Check if this button should be the pressed button
-            const buttonCol = document.createElement('div');
-            buttonCol.classList.add('col-4');
-            buttonCol.appendChild(button);
-            buttonContainer.appendChild(buttonCol);
+        }
+    
+        button.addEventListener('click', function () {
+            disableButtons(container, button);
+            if (!button.classList.contains('disabled')) {
+                pressedButton = button.textContent;
+            }
+    
+            // Save the state after pressing the button
+            saveContainerState(currentContainerCount, pressedButton); // Call save here
+    
+            // Special actions (like reward cards) should not create new containers
+            if (choice.specialAction) {
+                handleSpecialActions(choice, pressedButton);
+                return;
+            }
+    
+            // Proceed with normal container creation
+            storyNodeKey = choice.next;
+            createStoryContainer();
         });
-  
-        // Add the new container to the createdContainers array
-        createdContainers.push({ container, containerNumber: currentContainerCount });
-  
-        // Save the state of the container
-        updateRewardedItemsLeft(storyNodeKey, currentContainerCount, pressedButton);
-        saveContainerState(storyNodeKey, currentContainerCount, pressedButton);
+    
+        const buttonCol = document.createElement('div');
+        buttonCol.classList.add('col-4');
+        buttonCol.appendChild(button);
+        buttonContainer.appendChild(buttonCol);
+    });
+    
+
+    createdContainers.push({ container, containerNumber: currentContainerCount });
+
+    if (!loading) {
+        saveContainerState(currentContainerCount, pressedButton, [], ""); // Reset special state for the next container
         saveStats();
         saveVaribles();
-  
-        if (containerNumber === null) {
-            containerCount++;
-        }
-  
-        // Ensure containers are added in the correct order based on containerNumber (not ID)
-        createdContainers.sort((a, b) => a.containerNumber - b.containerNumber);
-  
+    }
+
+    if (containerNumber === null) {
+        containerCount++;
+    }
+
+    updateStoryLog(storyNode[storyNodeKey].text, function () {
         const gameElement = document.getElementById('game');
-        gameElement.innerHTML = ''; // Clear existing cards
+        gameElement.innerHTML = '';
         createdContainers.forEach(({ container }) => gameElement.appendChild(container));
-  
+
         if (currentContainerCount > 0 && !loading) {
             new LeaderLine(
                 document.getElementById('card' + (currentContainerCount - 1)),
@@ -385,7 +422,7 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
                     dropShadow: true
                 }
             );
-        } else if (currentContainerCount > 0 && loading) {
+        } else if (currentContainerCount > 0 && loading && currentContainerCount == (savedContainers.length-1)) {
             for (let index = 1; index < containerCount; index++) {
                 new LeaderLine(
                     document.getElementById('card' + (index - 1)),
@@ -400,7 +437,6 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
                         dropShadow: true
                     }
                 );
-
             }
         }
     });
@@ -409,6 +445,20 @@ function createStoryContainer(storyNodeKey, containerNumber = null, pressedButto
         container.classList.remove('ani');
     });
 }
+
+
+
+function pauseGame() {
+    gamePaused = true;
+    // You can also add other elements you want to disable
+    // e.g. disable click events on certain elements, etc.
+}
+
+function resumeGame() {
+    gamePaused = false;
+    // Re-enable other interactions here if needed
+}
+
 
 function updateStoryLogQueue(textArray, callback) {
     let index = 0;
@@ -440,16 +490,25 @@ function updateStoryLog(storyText, callback, speed = 30) {
     logContainer.appendChild(logEntry);
 
     let p = 0;
+    
+    // Pause the game when starting the typewriter effect
+    pauseGame();
+
+    // Update the text using the typewriter effect
     typeWriter(storyText, speed, p, logEntry, function() {
+        // Once the typewriter finishes, resume the game after a short delay
         setTimeout(() => {
+            resumeGame();  // Resume game flow here
+
             if (callback) {
-                callback();
+                callback();  // Call the provided callback function
             }
-        }, 250);
+        }, 250);  // You can adjust the delay here
     });
 
     logContainer.scrollTop = logContainer.scrollHeight;
 }
+
 
 function typeWriter(txt, speed, p, logEntry, onComplete) {
     if (p < txt.length) {
@@ -459,13 +518,11 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
             typeWriter(txt, speed, p, logEntry, onComplete);
         }, speed);
     } else if (onComplete) {
-        onComplete();
+        onComplete();  // Call onComplete when typing is done
     }
 }
 
 function handleSpecialActions(choice, pressedButton) {
-    let nextNode = choice.next;
-
     if (choice.specialAction) {
         console.log("Special action triggered for:", choice.text);
         let rand = Math.floor(Math.random() * 100);
@@ -478,24 +535,25 @@ function handleSpecialActions(choice, pressedButton) {
                         if (rand >= 50) {
                             main.setStamina(main.stamina - 1);
                             warningCard();
-                            nextNode = "escapedMonster";
+                            storyNodeKey = "escapedMonster";
                         } else {
                             isDead = true;
                             warningCard();
                             updateStoryLog("The monster caught you.", function() {
-                                nextNode = "dead";
-                                createStoryContainer(nextNode);
+                                storyNodeKey = "dead";
+                                createStoryContainer();
                             });
                         }
                     } else {
                         isDead = true;
                         updateStoryLog("You slip and are caught by the monster.", function() {
-                            nextNode = "dead";
-                            createStoryContainer(nextNode);
+                            storyNodeKey = "dead";
+                            createStoryContainer();
                         });
                     }
                 } else {
-                    nextNode = "inHut";
+                    storyNodeKey = "inHut";
+                    createStoryContainer();
                 }
                 break;
             case "Knock on the door":
@@ -503,38 +561,38 @@ function handleSpecialActions(choice, pressedButton) {
                     rand = Math.floor(Math.random() * 100);
                     if (rand >= 50) {
                         updateStoryLog("You hear a growl from inside. The monster doesn't seem to notice you.", function() {
-                            nextNode = "hut";
-                            createStoryContainer(nextNode);
+                            storyNodeKey = "hut";
+                            createStoryContainer();
                         });
                     } else {
                         if (haveShoes) {
                             rand = Math.floor(Math.random() * 100);
                             if (rand >= 20) {
-                                nextNode = "escapedMonster";
+                                storyNodeKey = "escapedMonster";
                             } else {
                                 isDead = true;
                                 updateStoryLog("You slip and are caught by the monster.", function() {
-                                    nextNode = "dead";
-                                    createStoryContainer(nextNode);
+                                    storyNodeKey = "dead";
+                                    createStoryContainer();
                                 });
                             }
                         } else {
                             rand = Math.floor(Math.random() * 100);
                             if (rand >= 50) {
-                                nextNode = "escapedMonster";
+                                storyNodeKey = "escapedMonster";
                             } else {
                                 isDead = true;
                                 updateStoryLog("You slip and are caught by the monster.", function() {
-                                    nextNode = "dead";
-                                    createStoryContainer(nextNode);
+                                    storyNodeKey = "dead";
+                                    createStoryContainer();
                                 });
                             }
                         }
                     }
                 } else {
                     updateStoryLog("with no response from inside, you enter.", function() {
-                        nextNode = "inHut";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "inHut";
+                        createStoryContainer();
                     });
                 }
                 break;
@@ -546,59 +604,66 @@ function handleSpecialActions(choice, pressedButton) {
                             rand = Math.floor(Math.random() * 100);
                             if (rand >= 5) {
                                 updateStoryLog("As you see the monster you slip away unnoticed.", function() {
-                                    nextNode = "escapedMonster";
-                                    createStoryContainer(nextNode);
+                                    storyNodeKey = "escapedMonster";
+                                    createStoryContainer();
                                 });
                             } else {
                                 isDead = true;
                                 updateStoryLog("As you peek through the window the monster rushes to attack you.", function() {
-                                    nextNode = "dead";
-                                    createStoryContainer(nextNode);
+                                    storyNodeKey = "dead";
+                                    createStoryContainer();
                                 });
                             }
                         }, 250);
                     });
                 } else {
                     updateStoryLog("You see nothing noteworthy inside.", function() {
-                        nextNode = "hut";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "hut";
+                        createStoryContainer();
                     });
                 }
                 break;
-            case "Search hut":
-                if (!searchedHut) {
-                    searchedHut = true;
-                    updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
-                        randomItems("hut");
-                        rewardCard(choice, pressedButton);
-                        nextNode = "trapdoor";
-                        createStoryContainer(nextNode);
-                    });
-                } else {
-                    nextNode = "trapdoor";
-                }
-                break;
+                case "Search hut":
+                    if (!searchedHut) {
+                        updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
+                            searchedHut = true;
+                            randomItems("hut");
+                            rewardCard(pressedButton);
+    
+                            // Now let storyNodeKey be updated to the next node and create container directly here
+                            storyNodeKey = "trapdoor";
+                            createStoryContainer(); // Only create the container here
+                        });
+                        return; // Exit after creating the container
+                    } else {
+                        storyNodeKey = "trapdoor";
+                        createStoryContainer(); // Create container if it's already searched
+                        return; // Exit after creating the container
+                    }
             case "Enter":
                 rand = Math.floor(Math.random() * 100);
                 if (ropeOnTrapdoor) {
                     updateStoryLog("You slide down the rope.", function() {
-                        nextNode = "portal";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "portal";
+                        createStoryContainer();
+                        return; // Exit after creating the container
                     });
                 } else {
                     updateStoryLog("You attempt to climb down the rickety ladder.", function() {
                         setTimeout(function() {
                             if (rand >= 50) {
                                 updateStoryLog("You successfully climb down.", function() {
-                                    nextNode = "portal";
-                                    createStoryContainer(nextNode);
+                                    storyNodeKey = "portal";
+                                    createStoryContainer();
+                                    return; // Exit after creating the container
                                 });
                             } else {
                                 updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
                                     trapdoorBroken = true;
                                     main.setHealth(main.health - 1);
-                                    nextNode = "portal";
-                                    createStoryContainer(nextNode);
+                                    storyNodeKey = "portal";
+                                    createStoryContainer();
+                                    return; // Exit after creating the container
                                 });
                             }
                         });
@@ -620,16 +685,16 @@ function handleSpecialActions(choice, pressedButton) {
                                 } else {
                                     updateStoryLog("Without a rope, you can't climb up and are stuck down here.", function() {
                                         updateStoryLog("After a few days you die from thirst.", function() {
-                                            nextNode = "dead";
-                                            createStoryContainer(nextNode);
+                                            storyNodeKey = "dead";
+                                            createStoryContainer();
                                         });
                                     });
                                 }
                             });
                         } else {
                             updateStoryLog("You climb back up the ladder", function() {
-                                nextNode = "trapdoor";
-                                createStoryContainer(nextNode);
+                                storyNodeKey = "trapdoor";
+                                createStoryContainer();
                             });
                         }
                     }
@@ -639,36 +704,36 @@ function handleSpecialActions(choice, pressedButton) {
                 if (!searchedCircle) {
                     searchedCircle = true;
                     updateStoryLogQueue(["You start searching around the circle.", "You find (circle items)."], function() {
-                        nextNode = "portal";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "portal";
+                        createStoryContainer();
                     });
                 } else {
                     updateStoryLogQueue(["You look around but find nothing new."], function() {
-                        nextNode = "portal";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "portal";
+                        createStoryContainer();
                     });
                 }
                 break;
             case "Summon":
                 if (haveBlackDeathPlant && haveBones && haveBottledSoul && haveRitualKnife && haveBook && readBook) {
                     updateStoryLogQueue(["You have all the necessary items."], function() {
-                        nextNode = "demonSummon";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "demonSummon";
+                        createStoryContainer();
                     });
                 } else if (readBook) {
                     updateStoryLogQueue(["From reading the book you know that you need a Bottled soul, Black death plant, Bones and a Ritual knife in order to summon a demon."], function() {
-                        nextNode = "portal";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "portal";
+                        createStoryContainer();
                     });
                 } else if (haveBook) {
                     updateStoryLogQueue(["You don't know want to do in order to summon anything, perhaps you could read the book you picked up."], function() {
-                        nextNode = "portal";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "portal";
+                        createStoryContainer();
                     });
                 } else {
                     updateStoryLogQueue(["You don't know want to do in order to summon anything."], function() {
-                        nextNode = "portal";
-                        createStoryContainer(nextNode);
+                        storyNodeKey = "portal";
+                        createStoryContainer();
                     });
                 }
                 break;
@@ -685,7 +750,6 @@ function handleSpecialActions(choice, pressedButton) {
         }
     }
 
-    createStoryContainer(nextNode);
 }
 
 function randomItems(category) {
@@ -811,84 +875,85 @@ function warningCard() {
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
 }
 
-function rewardCard(storyNodeKey, pressedButton) {
-    let previousCard = document.getElementById('card' + (containerCount - 1));
-    previousCard.classList.add("reward");
+function rewardCard(pressedButton) {
+        console.log(containerCount, 'current count');
 
-    let rewardId = (containerCount-1);
+        let previousCard = document.getElementById('card' + (containerCount - 1));
+        console.log(previousCard);
+        previousCard.classList.add("reward");
 
-    previousCard.innerHTML += `
-    <span class="position-absolute top-0 start-0 m-1">⭐</span>
-    <span class="position-absolute top-0 end-0 m-1">⭐</span>
-    <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
-    <span class="position-absolute bottom-0 end-0 m-1">⭐</span>
-    <div>
-        <h2>Rewards</h2>
-        <div id="rewardBox" class="row">
-        </div>
-    </div>`;
+        let specialCard = "reward"; // Mark this as a special card
+        let rewardId = (containerCount - 1); // Reward associated with this card
 
-    let rewardInventory = document.getElementById('rewardBox');
-
-    // Dynamically create and append reward items
-    rewardItem.forEach(item => {
-        let rewardElement = document.createElement('div');
-        rewardElement.classList.add('col-3');
-        
-        // Dynamically create the inner HTML based on the item
-        rewardElement.innerHTML = `
-            <div class="card reward-item">
-                <img src="img/items/${item}.png" alt="${item}" id="${item}" onclick="invPickUp()">
+        previousCard.innerHTML += `
+            <span class="position-absolute top-0 start-0 m-1">⭐</span>
+            <span class="position-absolute top-0 end-0 m-1">⭐</span>
+            <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
+            <span class="position-absolute bottom-0 end-0 m-1">⭐</span>
+            <div>
+                <h2>Rewards</h2>
+                <div id="rewardBox" class="row">
+                </div>
             </div>`;
-        
-        // Append reward item to reward inventory
-        rewardInventory.appendChild(rewardElement);
-        
-        // Define the event listener function
-        const rewardClickHandler = function() {
-            // Add item to inventory
-            setupInventory(item);
 
-            // Clear the content of the clicked reward item
+        let rewardInventory = document.getElementById('rewardBox');
+
+        // Create and append reward items
+        let rewardedItemsLeft = [...rewardItem]; // Create a local copy of reward items
+
+        rewardItem.forEach(item => {
+            let rewardElement = document.createElement('div');
+            rewardElement.classList.add('col-3');
+
             rewardElement.innerHTML = `
-            <div class="card reward-item">
-            </div>`;
+                <div class="card reward-item">
+                    <img src="img/items/${item}.png" alt="${item}" id="${item}">
+                </div>`;
 
-            // Remove the event listener after the click
-            rewardElement.removeEventListener('click', rewardClickHandler);
+            rewardInventory.appendChild(rewardElement);
+
+            const rewardClickHandler = function() {
+                // Add item to inventory
+                setupInventory(item);
             
-            // Update the rewardedItemsLeft after an item is clicked
-            updateRewardedItemsLeft(storyNodeKey, rewardId, pressedButton);
-        };
+                // Clear content of clicked reward item
+                rewardElement.innerHTML = `
+                    <div class="card reward-item">
+                    </div>`;
+            
+                rewardElement.removeEventListener('click', rewardClickHandler); // Remove event listener after click
+            
+                // Remove the clicked item from rewardedItemsLeft (only one instance)
+                const itemIndex = rewardedItemsLeft.indexOf(item);
+                if (itemIndex !== -1) {
+                    rewardedItemsLeft.splice(itemIndex, 1); // Remove one instance of the item
+                }
+            
+                // Save container state after each item is clicked
+                saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
+            
+                // Reset reward state when all items are claimed
+                if (rewardedItemsLeft.length === 0) {
+                    resetRewardState(); // Reset the global state
+                    return;
+                }
+            };
+            
+            
 
-        // Attach event listener programmatically
-        rewardElement.addEventListener('click', rewardClickHandler);
-    });
+            // Attach the event listener
+            rewardElement.addEventListener('click', rewardClickHandler);
+        });
 
-    // Initially update rewardedItemsLeft when the rewards are set
-    updateRewardedItemsLeft(storyNodeKey, rewardId, pressedButton);
-
-    // Clear rewardItem array after processing
-    rewardItem = [];
+        // Initially save the container state with all rewards before any are claimed
+        saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
 }
 
-
-function updateRewardedItemsLeft(storyNodeKey, rewardId, pressedButton) {
-    rewardedItemsLeft = []; // Clear previous entries
-    const rewardedItems = document.getElementsByClassName("reward-item");
-
-    // Loop through the original reward items to find which are still displayed
-    rewardItem.forEach(item => {
-        const imgElement = document.getElementById(item);
-        if (imgElement && imgElement.parentNode) { // Check if the image element still exists
-            rewardedItemsLeft.push(item); // Add unclicked item to the array
-        }
-    });
-
-    // Debugging: Check the values before calling saveContainerState
-    saveContainerState("inHut", rewardId, pressedButton);
+function resetRewardState() {
+    rewardItem = []; // Clear reward items
+    rewardedItemsLeft = []; // Clear rewarded items left
+    isSpecialCard = ""; // Reset special card status
 }
-
 
 function disableButtons(container, clickedButton) {
     const buttons = container.querySelectorAll('button');
@@ -901,13 +966,3 @@ function disableButtons(container, clickedButton) {
         }
     });
 }
-
-/*
-// Usage example
-updateStoryLog("You enter the dark forest, and hear rustling sounds.", function() {
-    updateStoryLog("Your heart races as you take a cautious step forward.", function() {
-        // Continue with the next actions here
-        console.log("Next action can proceed here.");
-    });
-});
-*/
