@@ -1,6 +1,5 @@
 import * as main from './main.js';
 import { storyNode } from './forestStory.js';
-import { ladderBreak } from './sounds.js';
 
 let searchedHut = false;
 let searchedCircle = false;
@@ -595,7 +594,6 @@ function handleSpecialActions(choice, pressedButton) {
                                     createStoryContainer(nextNode);
                                 });
                             } else {
-                                ladderBreak.play();
                                 updateStoryLog("The ladder breaks as you fall down and take 1 damage.", function() {
                                     trapdoorBroken = true;
                                     main.setHealth(main.health - 1);
@@ -840,7 +838,7 @@ function rewardCard(storyNodeKey, pressedButton) {
         // Dynamically create the inner HTML based on the item
         rewardElement.innerHTML = `
             <div class="card reward-item">
-                <img src="img/items/${item}.png" alt="${item}" id="${item}">
+                <img src="img/items/${item}.png" alt="${item}" id="${item}" onclick="invPickUp()">
             </div>`;
         
         // Append reward item to reward inventory
