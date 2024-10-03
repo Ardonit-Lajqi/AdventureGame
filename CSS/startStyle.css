@@ -28,6 +28,10 @@ header{
     rotate: 10deg;
 }
 
+.leaderboard{
+    background-color: #2C4860;
+}
+
 footer{
     background-color: #2C4860;
     position: fixed;
