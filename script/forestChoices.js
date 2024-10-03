@@ -137,7 +137,7 @@ window.onload = function() {
     }
 };
 
-function setupInventory(newItemId, removeItem = false) {
+function setupInventory(newItemId = null, removeItem = false) {
     let itemBoxes = document.getElementsByClassName("inventory-item");
 
     // Add new item or remove it
@@ -625,9 +625,11 @@ function handleSpecialActions(choice, pressedButton) {
                 break;
                 case "Search hut":
                     if (!searchedHut) {
-                        updateStoryLogQueue(["You start searching the hut.", "You find (hut items)."], function() {
+                        updateStoryLogQueue(["You start searching the hut."], function() {
                             searchedHut = true;
-                            randomItems("hut");
+                            rewardItem = randomItems("hut"); // Generate reward items
+                            console.log('Reward items before calling rewardCard:', rewardItem); // Log the items
+
                             rewardCard(pressedButton);
     
                             // Now let storyNodeKey be updated to the next node and create container directly here
@@ -680,7 +682,7 @@ function handleSpecialActions(choice, pressedButton) {
                                 if (haveRope) {
                                     updateStoryLog("You could use the rope to climb up.", function() {
                                         canUseRope = true; // Allow the player to use the rope
-                                        setupInventory(null);
+                                        setupInventory();
                                     });
                                 } else {
                                     updateStoryLog("Without a rope, you can't climb up and are stuck down here.", function() {
@@ -703,9 +705,15 @@ function handleSpecialActions(choice, pressedButton) {
             case "Search circle":
                 if (!searchedCircle) {
                     searchedCircle = true;
-                    updateStoryLogQueue(["You start searching around the circle.", "You find (circle items)."], function() {
+                    updateStoryLogQueue(["You start searching around the circle."], function() {
+                        rewardItem = randomItems("circle"); // Generate reward items
+                        console.log('Reward items before calling rewardCard:', rewardItem); // Log the items
+                        
+                        rewardCard(pressedButton);
+
+                        // Now let storyNodeKey be updated to the next node and create container directly here
                         storyNodeKey = "portal";
-                        createStoryContainer();
+                        createStoryContainer(); // Only create the container here
                     });
                 } else {
                     updateStoryLogQueue(["You look around but find nothing new."], function() {
@@ -753,19 +761,22 @@ function handleSpecialActions(choice, pressedButton) {
 }
 
 function randomItems(category) {
-    let numb = 4; // Number of possible reward types
-    let minItems = 1; // Ensure at least one item is added
-    let maxItems = 4; // Maximum number of items you want to add
+    let rewardItem = []; // Initialize rewardItem as a local array
+    let numb = 0; // Number of possible reward types
+    let minItems = 0; // Ensure at least one item is added
+    let maxItems = 0; // Maximum number of items you want to add
+    let rand = 0;
 
     switch (category) {
         case "hut":
-            // Generate a random number between 1 and maxItems (at least one item)
-            let rand = Math.floor(Math.random() * (maxItems - minItems + 1)) + minItems;
+            numb = 4;
+            minItems = 1;
+            maxItems = 4;
+            rand = Math.floor(Math.random() * (maxItems - minItems + 1)) + minItems;
 
             for (let index = 0; index < rand; index++) {
-                let newRand = Math.floor(Math.random() * numb) + 1; // Generate random item (1 to numb)
+                let newRand = Math.floor(Math.random() * numb) + 1;
 
-                // Add items based on random number
                 switch (newRand) {
                     case 1:
                         rewardItem.push("rope");
@@ -782,10 +793,35 @@ function randomItems(category) {
                 }
             }
             break;
+        case "circle":
+            numb = 2;
+            minItems = 1;
+            maxItems = 3;
+            rand = Math.floor(Math.random() * (maxItems - minItems + 1)) + minItems;
+
+            for (let index = 0; index < rand; index++) {
+                let newRand = Math.floor(Math.random() * numb) + 1;
+
+                switch (newRand) {
+                    case 1:
+                        rewardItem.push("glassBottle");
+                        break;
+                    case 2:
+                        rewardItem.push("magicPotion");
+                        break;
+                }
+            }
+            rewardItem.push("spellbook");
+            break;
         default:
             break;
     }
+
+    console.log('Generated reward items:', rewardItem); // Check generated items
+    return rewardItem;
 }
+
+
 
 
 function useRopeToAscend() {
@@ -793,7 +829,8 @@ function useRopeToAscend() {
     canUseRope = false;
     setupInventory("rope", true);
     updateStoryLog("You use the rope to climb through the broken trapdoor.", function() {
-        createStoryContainer("trapdoor");
+        storyNodeKey = "trapdoor";
+        createStoryContainer();
     });
 }
 
@@ -876,78 +913,84 @@ function warningCard() {
 }
 
 function rewardCard(pressedButton) {
-        console.log(containerCount, 'current count');
+    console.log(containerCount, 'current count');
 
-        let previousCard = document.getElementById('card' + (containerCount - 1));
-        console.log(previousCard);
-        previousCard.classList.add("reward");
+    let previousCard = document.getElementById('card' + (containerCount - 1));
+    console.log(previousCard);
+    previousCard.classList.add("reward");
 
-        let specialCard = "reward"; // Mark this as a special card
-        let rewardId = (containerCount - 1); // Reward associated with this card
+    let specialCard = "reward"; // Mark this as a special card
+    let rewardId = (containerCount - 1); // Reward associated with this card
 
-        previousCard.innerHTML += `
-            <span class="position-absolute top-0 start-0 m-1">⭐</span>
-            <span class="position-absolute top-0 end-0 m-1">⭐</span>
-            <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
-            <span class="position-absolute bottom-0 end-0 m-1">⭐</span>
-            <div>
-                <h2>Rewards</h2>
-                <div id="rewardBox" class="row">
-                </div>
+    // Clear previous rewards before adding new ones
+    previousCard.innerHTML += `
+        <span class="position-absolute top-0 start-0 m-1">⭐</span>
+        <span class="position-absolute top-0 end-0 m-1">⭐</span>
+        <span class="position-absolute bottom-0 start-0 m-1">⭐</span>
+        <span class="position-absolute bottom-0 end-0 m-1">⭐</span>
+        <div>
+            <h2>Rewards</h2>
+            <div id="rewardBox${rewardId}" class="row"> <!-- Unique ID for each reward box -->
+            </div>
+        </div>`;
+
+    let rewardInventory = document.getElementById(`rewardBox${rewardId}`); // Get the reward box for this card
+
+    // Check if rewardedItemsLeft is populated correctly
+    let rewardedItemsLeft = [...rewardItem]; // Create a local copy of reward items
+    console.log('Reward items left to claim:', rewardedItemsLeft); // Log remaining items
+
+    // Clear existing content in rewardInventory before adding new items
+    rewardInventory.innerHTML = ''; // Ensure the inventory is empty before adding
+
+    rewardedItemsLeft.forEach(item => {
+        let rewardElement = document.createElement('div');
+        rewardElement.classList.add('col-3');
+
+        rewardElement.innerHTML = `
+            <div class="card reward-item">
+                <img src="img/items/${item}.png" alt="${item}" id="${item}">
             </div>`;
 
-        let rewardInventory = document.getElementById('rewardBox');
+        rewardInventory.appendChild(rewardElement);
 
-        // Create and append reward items
-        let rewardedItemsLeft = [...rewardItem]; // Create a local copy of reward items
+        const rewardClickHandler = function() {
+            // Add item to inventory
+            setupInventory(item);
 
-        rewardItem.forEach(item => {
-            let rewardElement = document.createElement('div');
-            rewardElement.classList.add('col-3');
-
+            // Clear content of clicked reward item
             rewardElement.innerHTML = `
                 <div class="card reward-item">
-                    <img src="img/items/${item}.png" alt="${item}" id="${item}">
                 </div>`;
 
-            rewardInventory.appendChild(rewardElement);
+            rewardElement.removeEventListener('click', rewardClickHandler); // Remove event listener after click
 
-            const rewardClickHandler = function() {
-                // Add item to inventory
-                setupInventory(item);
-            
-                // Clear content of clicked reward item
-                rewardElement.innerHTML = `
-                    <div class="card reward-item">
-                    </div>`;
-            
-                rewardElement.removeEventListener('click', rewardClickHandler); // Remove event listener after click
-            
-                // Remove the clicked item from rewardedItemsLeft (only one instance)
-                const itemIndex = rewardedItemsLeft.indexOf(item);
-                if (itemIndex !== -1) {
-                    rewardedItemsLeft.splice(itemIndex, 1); // Remove one instance of the item
-                }
-            
-                // Save container state after each item is clicked
-                saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
-            
-                // Reset reward state when all items are claimed
-                if (rewardedItemsLeft.length === 0) {
-                    resetRewardState(); // Reset the global state
-                    return;
-                }
-            };
-            
-            
+            // Remove the clicked item from rewardedItemsLeft (only one instance)
+            const itemIndex = rewardedItemsLeft.indexOf(item);
+            if (itemIndex !== -1) {
+                rewardedItemsLeft.splice(itemIndex, 1); // Remove one instance of the item
+            }
 
-            // Attach the event listener
-            rewardElement.addEventListener('click', rewardClickHandler);
-        });
+            // Save container state after each item is clicked
+            saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
 
-        // Initially save the container state with all rewards before any are claimed
-        saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
+            // Reset reward state when all items are claimed
+            if (rewardedItemsLeft.length === 0) {
+                resetRewardState(); // Reset the global state
+                return;
+            }
+        };
+
+        // Attach the event listener
+        rewardElement.addEventListener('click', rewardClickHandler);
+    });
+
+    // Initially save the container state with all rewards before any are claimed
+    saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
+    console.log('Container state saved with rewards'); // Log saving
 }
+
+
 
 function resetRewardState() {
     rewardItem = []; // Clear reward items
