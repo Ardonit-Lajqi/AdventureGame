@@ -153,7 +153,7 @@ function setupInventory(newItemId = null, removeItem = false, loading = false) {
                     }
                     break;
                 case "spellbook":
-                    item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook">';
+                    item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook" class="locked">';
                     if (!loading) {
                         haveBook += 1;               
                     }
@@ -179,13 +179,13 @@ function setupInventory(newItemId = null, removeItem = false, loading = false) {
             // Remove the item if `removeItem` is true
             switch (newItemId) {
                 case "rope":
-                    haveRope += 1;
+                    haveRope -= 1;
                     break;
                 case "spellbook":
-                    haveBook += 1;
+                    haveBook -= 1;
                     break;
                 case "sword":
-                    haveSword += 1;
+                    haveSword -= 1;
                     break;
                 case "glassBottle":
                     break;
