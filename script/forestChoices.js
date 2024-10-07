@@ -30,6 +30,10 @@ let haveRitualKnife = false;
 
 let haveSword = 0;
 
+let haveMagicPotion = 0;
+
+let haveGlassBottle = 0;
+
 let isSpecialCard = "";
 
 let rewardItem = [];
@@ -112,6 +116,8 @@ window.onload = function() {
                     haveBones = savedVaribles.bone;
                     haveRitualKnife = savedVaribles.knife;
                     haveSword = savedVaribles.sword;
+                    haveMagicPotion = savedVaribles.magicPotion;
+                    haveGlassBottle = savedVaribles.glassBottle;
                 }
             }
         }
@@ -166,9 +172,15 @@ function setupInventory(newItemId = null, removeItem = false, loading = false) {
                     break;
                 case "glassBottle":
                     item.innerHTML = '<img src="img/items/glassBottle.png" alt="glassBottle">';
+                    if (!loading) {
+                        haveGlassBottle += 1;               
+                    }
                     break;
                 case "magicPotion":
                     item.innerHTML = '<img src="img/items/magicPotion.png" alt="magicPotion">';
+                    if (!loading) {
+                        haveMagicPotion += 1;               
+                    }
                     break;
                 default:
                     break;
@@ -188,8 +200,10 @@ function setupInventory(newItemId = null, removeItem = false, loading = false) {
                     haveSword -= 1;
                     break;
                 case "glassBottle":
+                    haveGlassBottle -= 1;
                     break;
                 case "magicPotion":
+                    haveMagicPotion -= 1;
                     break;
                 default:
                     break;
@@ -291,7 +305,9 @@ function saveVaribles() {
         deathPlant: haveBlackDeathPlant,
         bone: haveBones,
         knife: haveRitualKnife,
-        sword: haveSword
+        sword: haveSword,
+        magicPotion: haveMagicPotion,
+        glassBottle: haveGlassBottle
     };
 
     localStorage.setItem("variables", JSON.stringify(savedVarData));
