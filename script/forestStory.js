@@ -89,6 +89,18 @@ export let storyNode = {
             { text: "Summon demon", specialAction: true },
             { text: "Leave", next: "portal" }
         ]
-    }
+    },
+
+    startDeepForest: {
+        text: "You enter a deep part of the forest, You feel it will be easy to get lost here",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Forward", next: "forwardF"},
+            { text: "Right", next: "RightH"},
+            { text: "Left", next: "LeftV"}
+        ]
+    },
+
+    //
 };
 
