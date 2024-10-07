@@ -73,7 +73,7 @@ body {
 }
 
 .inventory-item:hover {
-    border: 2px solid black;
+    transform: scale(1.1);
 }
 
 .card-question {
@@ -248,6 +248,11 @@ body {
 
 .shadow-box{
     box-shadow: 3px 3px;
+}
+
+.inventory-item:hover:has(.locked) {
+    transform: none; /* No scaling on hover */
+    border: 2px solid #ffa600;
 }
 /* ---- Animation Fix!!!! ----
 @keyframes animationFade{
