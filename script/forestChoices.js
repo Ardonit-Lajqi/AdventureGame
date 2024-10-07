@@ -157,7 +157,7 @@ function setupInventory(newItemElement = null, removeItem = false, loading = fal
                     if (!loading) haveRope += 1;
                     break;
                 case "spellbook":
-                    item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook" class="locked">';
+                    item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook" class="locked" onmouseover="this.src=\'img/icons/lock.png\'" onmouseout="this.src=\'img/items/spellbook.png\'">';
                     if (!loading) haveBook += 1;
                     break;
                 case "sword":
@@ -577,10 +577,10 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
 
 function handleSpecialActions(choice, pressedButton) {
     if (choice.specialAction) {
-        console.log("Special action triggered for:", choice.text);
+        console.log("Special action triggered for:", choice.id);
         let rand = Math.floor(Math.random() * 100);
-        switch (choice.text) {
-            case "Open the door":
+        switch (choice.id) {
+            case "OpentheHutDoor":
                 console.log(choice.text);
                 if (monsterInHut) {
                     if (haveShoes) {
@@ -609,7 +609,7 @@ function handleSpecialActions(choice, pressedButton) {
                     createStoryContainer();
                 }
                 break;
-            case "Knock on the door":
+            case "KnockOnTheHutDoor":
                 if (monsterInHut) {
                     rand = Math.floor(Math.random() * 100);
                     if (rand >= 50) {
@@ -649,7 +649,7 @@ function handleSpecialActions(choice, pressedButton) {
                     });
                 }
                 break;
-            case "Peek through window":
+            case "PeekThroughHutWindow":
                 if (monsterInHut) {
                     warningCard();
                     updateStoryLog("You see the monster through the window.", function() {
@@ -676,7 +676,7 @@ function handleSpecialActions(choice, pressedButton) {
                     });
                 }
                 break;
-                case "Search hut":
+                case "SearchHut":
                     if (!searchedHut) {
                         updateStoryLogQueue(["You start searching the hut."], function() {
                             searchedHut = true;
@@ -695,7 +695,7 @@ function handleSpecialActions(choice, pressedButton) {
                         createStoryContainer(); // Create container if it's already searched
                         return; // Exit after creating the container
                     }
-            case "Enter":
+            case "YouFindATrapdoorInHut":
                 rand = Math.floor(Math.random() * 100);
                 if (ropeOnTrapdoor) {
                     updateStoryLog("You slide down the rope.", function() {
@@ -725,7 +725,7 @@ function handleSpecialActions(choice, pressedButton) {
                     });
                 }
                 break;
-            case "Leave circle":
+            case "LeaveHutCircle":
                 updateStoryLog("You go back to leave through the trapdoor", function() {
                     if (ropeOnTrapdoor) {
                         useRopeToAscend();
@@ -755,7 +755,7 @@ function handleSpecialActions(choice, pressedButton) {
                     }
                 });
                 break;
-            case "Search circle":
+            case "SearchHutCircle":
                 if (!searchedCircle) {
                     searchedCircle = true;
                     updateStoryLogQueue(["You start searching around the circle."], function() {
@@ -798,15 +798,27 @@ function handleSpecialActions(choice, pressedButton) {
                     });
                 }
                 break;
-            case "Summon demon":
+            case "SummonDemon":
                 updateStoryLogQueue(["As you follow the instructions in the book you successfully summon a demon."], function() {
                     updateStoryLogQueue(["He thanks you for releasing him before attacking you."], function() {
                         monsterBattle();
                     });
                 });
                 break;
-            case "Return to fight monster":
+            case "ReturnToFightMonster":
                 monsterBattle();
+                break;
+            case "LLF":
+                updateStoryLogQueue(["On the way you picked up some flowers"], function () {
+                    storyNodeKey = "leftLLF";
+                    createStoryContainer();
+                } );
+                break;
+            case "DeepForestStart":
+                updateStoryLogQueue(["You recognize this as where you started"], function(){
+                    storyNodeKey = "startDeepForest";
+                    createStoryContainer();
+                });
                 break;
         }
     }
