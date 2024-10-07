@@ -250,6 +250,10 @@ body {
     box-shadow: 3px 3px;
 }
 
+.delete{
+    border: 2px solid red;
+}
+
 .inventory-item:hover:has(.locked) {
     transform: none; /* No scaling on hover */
     border: 2px solid #ffa600;
