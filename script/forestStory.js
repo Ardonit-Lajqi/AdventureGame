@@ -96,8 +96,8 @@ export let storyNode = {
         question: "Where do you wanna go?",
         choices: [
             { text: "Forward", next: "forwardF"},
-            { text: "Right", next: "RightH"},
-            { text: "Left", next: "LeftV"}
+            { text: "Right", next: "rightR"},
+            { text: "Left", next: "leftL"}
         ]
     },
 
