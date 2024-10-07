@@ -13,11 +13,11 @@ let haveShoes = true;
 
 let trapdoorBroken = false;
 
-let haveRope = false;
+let haveRope = 0;
 let canUseRope = false;
 let ropeOnTrapdoor = false;
 
-let haveBook = false;
+let haveBook = 0;
 let readBook = false;
 
 let haveBottledSoul = false;
@@ -28,7 +28,7 @@ let haveBones = false;
 
 let haveRitualKnife = false;
 
-let haveSword = false;
+let haveSword = 0;
 
 let isSpecialCard = "";
 
@@ -130,14 +130,14 @@ window.onload = function() {
         if (savedContainers.length > 0) {
             containerCount = Math.max(0, parseInt(savedContainers[savedContainers.length - 1].containerNumber) + 1);
         }
-        loadInventory();
+        loadInventory(true);
     } else {
         storyNodeKey = "start";
         createStoryContainer();
     }
 };
 
-function setupInventory(newItemId = null, removeItem = false) {
+function setupInventory(newItemId = null, removeItem = false, loading = false) {
     let itemBoxes = document.getElementsByClassName("inventory-item");
 
     // Add new item or remove it
@@ -148,15 +148,21 @@ function setupInventory(newItemId = null, removeItem = false) {
             switch (newItemId) {
                 case "rope":
                     item.innerHTML = '<img src="img/items/rope.png" alt="rope">';
-                    haveRope = true;
+                    if (!loading) {
+                        haveRope += 1;               
+                    }
                     break;
                 case "spellbook":
                     item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook">';
-                    haveBook = true;
+                    if (!loading) {
+                        haveBook += 1;               
+                    }
                     break;
                 case "sword":
                     item.innerHTML = '<img src="img/items/sword.png" alt="sword">';
-                    haveSword = true;
+                    if (!loading) {
+                        haveSword += 1;               
+                    }
                     break;
                 case "glassBottle":
                     item.innerHTML = '<img src="img/items/glassBottle.png" alt="glassBottle">';
@@ -171,6 +177,23 @@ function setupInventory(newItemId = null, removeItem = false) {
             return true; // Stop after adding the item
         } else if (item.id == newItemId && removeItem) {
             // Remove the item if `removeItem` is true
+            switch (newItemId) {
+                case "rope":
+                    haveRope += 1;
+                    break;
+                case "spellbook":
+                    haveBook += 1;
+                    break;
+                case "sword":
+                    haveSword += 1;
+                    break;
+                case "glassBottle":
+                    break;
+                case "magicPotion":
+                    break;
+                default:
+                    break;
+            }
             item.id = "";
             item.innerHTML = "";
             return true;
@@ -180,6 +203,7 @@ function setupInventory(newItemId = null, removeItem = false) {
 
     if (itemAddedOrRemoved) {
         saveInventory(); // Save inventory after modification
+        saveVaribles()
     }
 }
 
@@ -291,7 +315,7 @@ function saveInventory() {
     console.log("Inventory saved:", inventoryData);
 }
 
-function loadInventory() {
+function loadInventory(loading = false) {
     let savedInventory = JSON.parse(localStorage.getItem("inventory"));
     
     if (savedInventory && savedInventory.length > 0) {
@@ -300,7 +324,7 @@ function loadInventory() {
         // Loop through saved inventory and set items in their respective slots
         savedInventory.forEach((itemId, index) => {
             if (itemId) {
-                setupInventory(itemId); // Use the setupInventory function to add the item
+                setupInventory(itemId, false, loading); // Use the setupInventory function to add the item
             }
         });
         
@@ -723,7 +747,7 @@ function handleSpecialActions(choice, pressedButton) {
                 }
                 break;
             case "Summon":
-                if (haveBlackDeathPlant && haveBones && haveBottledSoul && haveRitualKnife && haveBook && readBook) {
+                if (haveBlackDeathPlant && haveBones && haveBottledSoul && haveRitualKnife && !haveBook && readBook) {
                     updateStoryLogQueue(["You have all the necessary items."], function() {
                         storyNodeKey = "demonSummon";
                         createStoryContainer();
@@ -733,7 +757,7 @@ function handleSpecialActions(choice, pressedButton) {
                         storyNodeKey = "portal";
                         createStoryContainer();
                     });
-                } else if (haveBook) {
+                } else if (!haveBook) {
                     updateStoryLogQueue(["You don't know want to do in order to summon anything, perhaps you could read the book you picked up."], function() {
                         storyNodeKey = "portal";
                         createStoryContainer();
