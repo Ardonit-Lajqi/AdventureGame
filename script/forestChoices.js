@@ -880,12 +880,21 @@ function randomItems(category) {
 function useRopeToAscend() {
     ropeOnTrapdoor = true;
     canUseRope = false;
-    setupInventory("rope", true);
+
+    // Find the inventory element for the rope
+    let ropeElement = Array.from(document.getElementsByClassName("inventory-item")).find(item => item.id === "rope");
+
+    // Remove the rope from the inventory
+    if (ropeElement) {
+        setupInventory(ropeElement, true);
+    }
+
     updateStoryLog("You use the rope to climb through the broken trapdoor.", function() {
         storyNodeKey = "trapdoor";
         createStoryContainer();
     });
 }
+
 
 function monsterBattle() {
     const fightCard = document.createElement("div");
