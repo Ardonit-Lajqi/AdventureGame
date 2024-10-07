@@ -143,53 +143,44 @@ window.onload = function() {
     }
 };
 
-function setupInventory(newItemId = null, removeItem = false, loading = false) {
+function setupInventory(newItemElement = null, removeItem = false, loading = false) {
     let itemBoxes = document.getElementsByClassName("inventory-item");
 
     // Add new item or remove it
     let itemAddedOrRemoved = Array.from(itemBoxes).some(item => {
         if (!item.id && !removeItem) {
             // Assign the new item ID to the first empty slot
-            item.id = newItemId;
-            switch (newItemId) {
+            item.id = newItemElement;
+            switch (newItemElement) {
                 case "rope":
                     item.innerHTML = '<img src="img/items/rope.png" alt="rope">';
-                    if (!loading) {
-                        haveRope += 1;               
-                    }
+                    if (!loading) haveRope += 1;
                     break;
                 case "spellbook":
                     item.innerHTML = '<img src="img/items/spellbook.png" alt="spellbook">';
-                    if (!loading) {
-                        haveBook += 1;               
-                    }
+                    if (!loading) haveBook += 1;
                     break;
                 case "sword":
                     item.innerHTML = '<img src="img/items/sword.png" alt="sword">';
-                    if (!loading) {
-                        haveSword += 1;               
-                    }
+                    if (!loading) haveSword += 1;
                     break;
                 case "glassBottle":
                     item.innerHTML = '<img src="img/items/glassBottle.png" alt="glassBottle">';
-                    if (!loading) {
-                        haveGlassBottle += 1;               
-                    }
+                    if (!loading) haveGlassBottle += 1;
                     break;
                 case "magicPotion":
                     item.innerHTML = '<img src="img/items/magicPotion.png" alt="magicPotion">';
-                    if (!loading) {
-                        haveMagicPotion += 1;               
-                    }
+                    if (!loading) haveMagicPotion += 1;
                     break;
                 default:
                     break;
             }
             addClickEvent(item); // Add click event
             return true; // Stop after adding the item
-        } else if (item.id == newItemId && removeItem) {
+        } else if (item === newItemElement && removeItem) {
             // Remove the item if `removeItem` is true
-            switch (newItemId) {
+            let itemId = item.id;
+            switch (itemId) {
                 case "rope":
                     haveRope -= 1;
                     break;
@@ -208,8 +199,14 @@ function setupInventory(newItemId = null, removeItem = false, loading = false) {
                 default:
                     break;
             }
-            item.id = "";
-            item.innerHTML = "";
+
+            item.id = ""; // Clear item ID
+            item.innerHTML = ""; // Clear item content
+
+            // Remove event listeners from this specific element
+            let newItem = item.cloneNode(true); // Clone the node
+            item.parentNode.replaceChild(newItem, item); // Replace the old element with the clone
+
             return true;
         }
         return false;
@@ -217,10 +214,9 @@ function setupInventory(newItemId = null, removeItem = false, loading = false) {
 
     if (itemAddedOrRemoved) {
         saveInventory(); // Save inventory after modification
-        saveVaribles()
+        saveVaribles();
     }
 }
-
 
 // Attach the click event to the inventory item element
 function addClickEvent(itemElement) {
@@ -234,6 +230,21 @@ function addClickEvent(itemElement) {
 
     const itemData = items.find(i => i.id === itemElement.id);
     if (itemData) {
+        // Attach context menu event for removing item
+        if (itemData.id !== "spellbook") {
+            console.log("Added contextmenu to " + itemElement);
+            itemElement.addEventListener("contextmenu", function (event) {
+                event.preventDefault();  // Prevents the default context menu from showing
+                setupInventory(itemElement, true); // Pass the item element itself to be removed
+            });
+        } else {
+            itemElement.addEventListener("contextmenu", function (event) {
+                event.preventDefault();
+                updateStoryLog("You can not remove quest items", function () {});
+            });
+        }
+
+        // Attach click event for item actions
         itemElement.addEventListener('click', function() {
             if (itemData.id === 'rope' && trapdoorBroken && canUseRope) {
                 useRopeToAscend();
@@ -246,6 +257,8 @@ function addClickEvent(itemElement) {
         });
     }
 }
+
+
 
 
 function clearSaveData() {
@@ -763,7 +776,7 @@ function handleSpecialActions(choice, pressedButton) {
                 }
                 break;
             case "Summon":
-                if (haveBlackDeathPlant && haveBones && haveBottledSoul && haveRitualKnife && !haveBook && readBook) {
+                if (haveBlackDeathPlant && haveBones && haveBottledSoul && haveRitualKnife && haveBook && readBook) {
                     updateStoryLogQueue(["You have all the necessary items."], function() {
                         storyNodeKey = "demonSummon";
                         createStoryContainer();
@@ -773,7 +786,7 @@ function handleSpecialActions(choice, pressedButton) {
                         storyNodeKey = "portal";
                         createStoryContainer();
                     });
-                } else if (!haveBook) {
+                } else if (haveBook) {
                     updateStoryLogQueue(["You don't know want to do in order to summon anything, perhaps you could read the book you picked up."], function() {
                         storyNodeKey = "portal";
                         createStoryContainer();
