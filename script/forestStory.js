@@ -14,9 +14,9 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leave" },
-            { text: "Open the door", specialAction: true },
-            { text: "Knock on the door", specialAction: true },
-            { text: "Peek through window", specialAction: true }
+            { text: "Open the door", specialAction: true, id:"OpentheHutDoor" },
+            { text: "Knock on the door", specialAction: true, id:"KnockOnTheHutDoor" },
+            { text: "Peek through window", specialAction: true, id:"PeekThroughHutWindow" }
         ]
     },
 
@@ -25,7 +25,7 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leaveHut" },
-            { text: "Search hut", specialAction: true }
+            { text: "Search hut", specialAction: true, id:"SearchHut" }
         ]
     },
 
@@ -34,7 +34,7 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "inHut" },
-            { text: "Enter", specialAction: true }
+            { text: "Enter", specialAction: true, id:"YouFindATrapdoorInHut" }
         ]
     },
 
@@ -43,7 +43,7 @@ export let storyNode = {
         question: "What do you want to do?",
         choices: [
             { text: "Leave", next: "leave" },
-            { text: "Return to fight monster", specialAction: true }
+            { text: "Return to fight monster", specialAction: true, id:"ReturnToFightMonster" }
         ]
     },
 
@@ -68,9 +68,9 @@ export let storyNode = {
         text: "You see a room with a demoic circle in the middle.",
         question: "What do you want to do?",
         choices: [
-            { text: "Leave circle", specialAction: true },
-            { text: "Search circle", specialAction: true },
-            { text: "Summon", specialAction: true }
+            { text: "Leave circle", specialAction: true, id:"LeaveHutCircle" },
+            { text: "Search circle", specialAction: true, id:"SearchHutCircle" },
+            { text: "Summon", specialAction: true, id:"Summon" }
         ]
     },
 
@@ -86,7 +86,7 @@ export let storyNode = {
         text: "Do you want to attempt to summon a demon?",
         question: "What do you want to do",
         choices: [
-            { text: "Summon demon", specialAction: true },
+            { text: "Summon demon", specialAction: true, id:"SummonDemon" },
             { text: "Leave", next: "portal" }
         ]
     },
@@ -101,6 +101,65 @@ export let storyNode = {
         ]
     },
 
-    //
+    leftL: {
+        text: "You go left",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Forward", next: "forwardLF"},
+            { text: "Left", next: "leftLL"} 
+        ]
+    },
+
+    forwardLF: {
+        text: "You go Forward",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Forward", next: "forwardLFF"},
+            { text: "Left", next: "rightLFL"},
+            { text: "Right", next: "rightLFR"}
+        ]
+    },
+
+    forwardLFF: {
+        text: "You go Forward",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Left", specialAction: true, id: "DeepForestStart"},
+            { text: "Forward", next: "forwardLFFF"}
+        ]
+    },
+
+    leftLL: {
+        text: "You go left",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Forward", specialAction: true, id: "LLF"}, // här ska den ge en blomma!
+            { text: "Back", next: "leftL"},
+            { text: "Right", next: "rightLFL"}
+        ]
+    },
+
+    leftLLF: {
+        text: "You go foward",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Forward", specialAction: true, id: "LFFFR"}, // här ska den ge en grön mossa!
+            { text: "Right", next: "rightLFL"},
+        ]
+    },
+
+    rightLFL: {
+        text: "You go Right",
+        question: "Where do you wanna go?",
+        choices: [
+            { text: "Right", specialAction: true, id:"DeepForestStart"},
+            { text: "Back", next: "backLF" }
+        ]
+    },
+
+
+
+
+
 };
 
