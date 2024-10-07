@@ -1,12 +1,24 @@
 import * as main from './main.js';
 import { storyNode } from './forestStory.js';
 
+class Enemy {
+    constructor(name, health, stamina, level, image) {
+        this.name = name;
+        this.health = health;
+        this.maxHealth = health;
+        this.stamina = stamina;
+        this.maxStamina = stamina;
+        this.level = level;
+        this.image = image;  // Added image attribute
+    }
+}
+
 let searchedHut = false;
 let searchedCircle = false;
 
 let isDead = false;
 
-let monsterInHut = false;
+let monsterInHut = true;
 let monsterDead = false;
 
 let haveShoes = true;
@@ -45,6 +57,16 @@ let createdContainers = [];
 let storyNodeKey = "";
 
 let gamePaused = false;
+
+let fistDamage = 1;
+let monsterBlocked = false;
+let playerBlocked = false;
+
+let monster = new Enemy("Monster", 10, 10, 5, "../img/monsters/monsterImg.jpg");
+let snake = new Enemy("Snake", 2, 3, 1, "");
+let boar = new Enemy("Boar", 4, 5, 3, "");
+let demon = new Enemy("Demon", 15, 10, 7, "");
+
 
 // Set initial game state
 main.setStamina(10);
@@ -588,20 +610,26 @@ function handleSpecialActions(choice, pressedButton) {
                         if (rand >= 50) {
                             main.setStamina(main.stamina - 1);
                             warningCard();
-                            storyNodeKey = "escapedMonster";
+                            updateStoryLog("As you open the door you see the monster and run.", function() {
+                                storyNodeKey = "escapedMonster";
+                                createStoryContainer();
+                            });
                         } else {
                             isDead = true;
                             warningCard();
-                            updateStoryLog("The monster caught you.", function() {
+                            updateStoryLog("As you open the door the monster catches you.", function() {
                                 storyNodeKey = "dead";
                                 createStoryContainer();
                             });
                         }
                     } else {
                         isDead = true;
-                        updateStoryLog("You slip and are caught by the monster.", function() {
-                            storyNodeKey = "dead";
-                            createStoryContainer();
+                        warningCard();
+                        updateStoryLog("As you open the door you see the monster and atempt to run.", function() {
+                            updateStoryLog("As you run you slip and are caught by the monster.", function() {
+                                storyNodeKey = "dead";
+                                createStoryContainer();
+                            });
                         });
                     }
                 } else {
@@ -621,9 +649,14 @@ function handleSpecialActions(choice, pressedButton) {
                         if (haveShoes) {
                             rand = Math.floor(Math.random() * 100);
                             if (rand >= 20) {
-                                storyNodeKey = "escapedMonster";
+                                warningCard();
+                                updateStoryLog("As you knock on the door you hear the monster sprint towards you.", function() {
+                                    storyNodeKey = "escapedMonster";
+                                    createStoryContainer();
+                                });
                             } else {
                                 isDead = true;
+                                warningCard();
                                 updateStoryLog("You slip and are caught by the monster.", function() {
                                     storyNodeKey = "dead";
                                     createStoryContainer();
@@ -632,9 +665,14 @@ function handleSpecialActions(choice, pressedButton) {
                         } else {
                             rand = Math.floor(Math.random() * 100);
                             if (rand >= 50) {
-                                storyNodeKey = "escapedMonster";
+                                warningCard();
+                                updateStoryLog("As you knock on the door you hear the monster sprint towards you.", function() {
+                                    storyNodeKey = "escapedMonster";
+                                    createStoryContainer();
+                                });
                             } else {
                                 isDead = true;
+                                warningCard();
                                 updateStoryLog("You slip and are caught by the monster.", function() {
                                     storyNodeKey = "dead";
                                     createStoryContainer();
@@ -801,12 +839,13 @@ function handleSpecialActions(choice, pressedButton) {
             case "SummonDemon":
                 updateStoryLogQueue(["As you follow the instructions in the book you successfully summon a demon."], function() {
                     updateStoryLogQueue(["He thanks you for releasing him before attacking you."], function() {
-                        monsterBattle();
+                        monsterBattle(demon); 
                     });
                 });
                 break;
-            case "ReturnToFightMonster":
-                monsterBattle();
+            
+            case "Return to fight monster":
+                monsterBattle(monster);
                 break;
             case "LLF":
                 updateStoryLogQueue(["On the way you picked up some flowers"], function () {
@@ -908,76 +947,165 @@ function useRopeToAscend() {
 }
 
 
-function monsterBattle() {
+function monsterBattle(selectedMonster) {
+    const monster = selectedMonster || monsters[Math.floor(Math.random() * monsters.length)];
+    
+    const fightCard = createFightCard(monster);
+    document.getElementById('game').appendChild(fightCard);
+    
+    const monsterElements = {
+        monsterLevel: document.getElementById('monsterLevel'),
+        monsterHealth: document.getElementById('monsterHealth'),
+        monsterStamina: document.getElementById('monsterStamina'),
+        monsterImage: document.getElementById('monsterImg'),
+        monsterName: document.getElementById('monsterName'),
+        attackButton: document.getElementById('attackButton'),
+        fleeButton: document.getElementById('fleeButton'),
+        blockButton: document.getElementById('blockButton'),
+        waitButton: document.getElementById('waitButton')
+    };
+
+    updateStoryLog("You enter combat with the " + monster.name + ".", function() {
+        playersTurn(monster, monsterElements);
+        updateMonsterStats(monster, monsterElements);
+    });
+}
+
+function createFightCard(monster) {
     const fightCard = document.createElement("div");
-    fightCard.classList.add("fightCard")
+    fightCard.classList.add("fightCard");
     fightCard.innerHTML = `
         <div class="card fightScene shadow px-3 py-3">
             <div class="row">
                 <div class="col-2">
                     <div class="card monster-lvl">
-                        <h2 class="text-center text-light" id="lvl">lvl 12</h2>
+                        <h2 class="text-center text-light" id="monsterLevel">lvl ${monster.level}</h2>
                     </div>
                 </div>
                 <div class="col-10">
-                    <div class="row align-items-center g-0 mb-2">
-                        <div class="col-auto">
-                            <div class="bg-dark progress-icon d-flex align-items-center justify-content-center" style="width: 25px;">
-                                <img src="img/icons/heart.png" alt="health" class="img-fluid">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="progress bg-dark" style="height: 25px;">
-                                <div class="progress-bar healthbar" role="progressbar" style="background-color: #A1142D; border: 2px solid black; width: 100%;" id="monsterHealth" aria-valuenow="10" aria-valuemin="0" aria-valuemax="10"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row align-items-center g-0 mb-2">
-                        <div class="col-auto">
-                            <div class="bg-dark progress-icon d-flex align-items-center justify-content-center" style="width: 25px;">
-                                <img src="img/icons/lighting.png" alt="stamina" class="img-fluid">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="progress bg-dark" style="height: 25px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="border: 2px solid black; width: 100%;" id="monsterStamina" aria-valuenow="10" aria-valuemin="0" aria-valuemax="10"></div>
-                            </div>
-                        </div>
-                    </div>
+                    <h1 class="monster-name card text-center text-light" id="monsterName">${monster.name}</h1>
+                    ${createProgressBar("health", monster.health, monster.maxHealth, "img/icons/heart.png")}
+                    ${createProgressBar("stamina", monster.stamina, monster.maxStamina, "img/icons/lighting.png")}
                 </div>
-                <img src="img/startPage-img/forest.jpg" alt="monster" id="monsterImg">
+                <img src="${monster.image}" alt="${monster.name}" id="monsterImg">
             </div>
         </div>
         
         <div class="card card-option shadow mt-3 p-3">
             <div class="row d-flex justify-content-center text-center">
                 <div class="col-6">
-                    <button class="btn btn-attack fs-2">
-                        <span><img src="img/icons/sword (3).png" alt="" style="width: 50px;" id="btnAttack"></span>ATTACK
+                    <button class="btn btn-attack fs-2" id="attackButton">
+                        <span><img src="img/icons/sword (3).png" alt="" style="width: 50px;"></span>ATTACK
                     </button>
                 </div>
                 <div class="col-6">
-                    <button class="btn btn-flee fs-2">
-                        <span><img src="img/icons/running.png" alt="" style="width: 50px;" id="btnFlee"></span>FLEE
+                    <button class="btn btn-flee fs-2" id="fleeButton">
+                        <span><img src="img/icons/running.png" alt="" style="width: 50px;"></span>FLEE
                     </button>
                 </div>
                 <div class="col-6 mt-2">
-                    <button class="btn btn-block fs-2">
-                        <span><img src="img/icons/defence.png" alt="" style="width: 50px;" id="btnBlock"></span>BLOCK
+                    <button class="btn btn-block fs-2" id="blockButton">
+                        <span><img src="img/icons/defence.png" alt="" style="width: 50px;"></span>BLOCK
                     </button>
                 </div>
                 <div class="col-6 mt-2">
-                    <button class="btn btn-wait fs-2">
-                        <span><img src="img/icons/hourglass.png" alt="" style="width: 50px;" id="btnWait"></span>WAIT
+                    <button class="btn btn-wait fs-2" id="waitButton">
+                        <span><img src="img/icons/hourglass.png" alt="" style="width: 50px;"></span>WAIT
                     </button>
                 </div>
             </div>
         </div>
     `;
-
-    document.getElementById('game').appendChild(fightCard);
+    return fightCard;
 }
+
+function createProgressBar(type, value, maxValue, icon) {
+    return `
+        <div class="row align-items-center g-0 mb-2">
+            <div class="col-auto">
+                <div class="bg-dark progress-icon d-flex align-items-center justify-content-center" style="width: 25px;">
+                    <img src="${icon}" alt="${type}" class="img-fluid">
+                </div>
+            </div>
+            <div class="col">
+                <div class="progress bg-dark" style="height: 25px;">
+                    <div class="progress-bar ${type === 'health' ? 'healthbar' : 'bg-warning'}" role="progressbar" 
+                        style="background-color: ${type === 'health' ? '#A1142D' : 'yellow'}; border: 2px solid black; width: ${(value / maxValue) * 100}%;"
+                        id="monster${type.charAt(0).toUpperCase() + type.slice(1)}" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="${maxValue}"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function playersTurn(monster, monsterElements) {
+    saveStats();
+    monsterElements.attackButton.addEventListener('click', function() {
+        updateStoryLog("Please select an item to use or left-click the attack button to use your fists.", function() {});
+    });
+    
+    monsterElements.attackButton.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        if (main.stamina > 0) {
+            updateStoryLog("You punch the " + monster.name + ".", function() {
+                // Replace with the actual logic for block checking and damage calculation
+                if (monsterBlocked) {
+                    updateStoryLog("The monster blocks your punch and loses " + fistDamage + " stamina.", function() {
+                        monster.stamina -= fistDamage;  // Reduce stamina
+                        updateMonsterStats(monster, monsterElements);  // Update stamina bar
+                        monstersTurn(monster, monsterElements);
+                    });
+                } else {
+                    updateStoryLog("You deal " + fistDamage + " damage.", function() {
+                        monster.health -= fistDamage;  // Reduce health
+                        updateMonsterStats(monster, monsterElements);  // Update health bar
+                        monstersTurn(monster, monsterElements);
+                    });
+                }
+            });
+        } else {
+            updateStoryLog("You don't have enough stamina.", function() {});
+        }
+    });
+
+    monsterElements.fleeButton.addEventListener('click', function() {
+        // Flee logic
+    });
+
+    monsterElements.blockButton.addEventListener('click', function() {
+        // Block logic
+    });
+
+    monsterElements.waitButton.addEventListener('click', function() {
+        // Wait logic
+    });
+
+    updateStoryLog("You start your turn.", function() {
+        updateStoryLog("Please choose an action.", function() {});
+    });
+}
+
+function updateMonsterStats(monster, monsterElements) {
+    monsterElements.monsterLevel.innerHTML = "lvl " + monster.level;
+
+    // Update health display
+    monsterElements.monsterHealth.innerHTML = monster.health + " Hp";
+    monsterElements.monsterHealth.style.width = (monster.health / monster.maxHealth) * 100 + "%";
+
+    // Update stamina display
+    monsterElements.monsterStamina.innerHTML = monster.stamina + " Sp";
+    monsterElements.monsterStamina.style.width = (monster.stamina / monster.maxStamina) * 100 + "%";
+}
+
+function monstersTurn(monster, monsterElements) {
+    updateMonsterStats(monster, monsterElements);
+    saveStats();
+    updateStoryLog("The " + monster.name + " starts its turn.", function() {
+        // Monster turn logic
+    });
+}
+
+
 
 function warningCard() {
     let previousCard = document.getElementById('card' + (containerCount - 1));
@@ -1083,3 +1211,4 @@ function disableButtons(container, clickedButton) {
         }
     });
 }
+

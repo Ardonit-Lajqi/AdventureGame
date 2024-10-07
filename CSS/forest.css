@@ -185,8 +185,12 @@ body {
     margin-top: 10px;
 }
 
-.monster-lvl{
+.monster-lvl {
     background-color: #6F584B;
+}
+.monster-name {
+    background-color: #6F584B;
+    width: auto;
 }
 
 .card-option{
