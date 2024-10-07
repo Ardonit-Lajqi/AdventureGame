@@ -258,6 +258,7 @@ body {
     transform: none; /* No scaling on hover */
     border: 2px solid #ffa600;
 }
+
 /* ---- Animation Fix!!!! ----
 @keyframes animationFade{
     0% {
