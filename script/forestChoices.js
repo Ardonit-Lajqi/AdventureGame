@@ -86,9 +86,9 @@ let boar = new Enemy("Boar", 4, 5, 3, "../img/monsters/BoarImg.jpg", []);
 let demon = new Enemy("Demon", 15, 10, 7, "", []);
 
 let monsterAttackDamage = {
-    slash: 2 + rageCounter,
-    bite: 1 + rageCounter,
-    ram: 1 + rageCounter,
+    slash: 2,
+    bite: 1,
+    ram: 1,
 }
 
 let chosenMonster = null;
@@ -1150,10 +1150,12 @@ function playersTurn() {
     triedToFlee = false;
     playerBlocked = false;
     playerWaited = false;
+    updateMonsterStats();
 
     saveStats();
     updateStoryLog("You start your turn.", function() {
         updateStoryLog("Please choose an action.", function() {});
+        // can use items here
     });
 }
 
@@ -1170,11 +1172,11 @@ function updateMonsterStats() {
     elements.monsterStamina.style.width = (chosenMonster.stamina / chosenMonster.maxStamina) * 100 + "%";
 }
 
-function actionCalculation() {
+function actionCalculation(action) {
+    console.log("actionCalculation called with action:", action);  // Debugging line
     const elements = chosenMonster.elements;  // Access elements from chosenMonster
 
     saveStats();
-
     playerTurn = false;
     monsterTurn = true;
     let rand = Math.floor(Math.random() * 100);
@@ -1188,11 +1190,7 @@ function actionCalculation() {
                         main.setStamina(main.stamina - 1);
                         chosenMonster.stamina -= fistDamage;  // Reduce stamina
                         updateMonsterStats();  // Update stamina bar
-                        if (chosenMonster.health > 0) {
-                            monstersTurn();
-                        } else {
-                            createStoryContainer();
-                        }
+                        monstersTurn();
                     });
                 } else {
                     updateStoryLog("You deal " + fistDamage + " damage.", function() {
@@ -1202,6 +1200,8 @@ function actionCalculation() {
                         if (chosenMonster.health > 0) {
                             monstersTurn();
                         } else {
+                            monsterInHut = false;
+                            monsterDead = true;
                             createStoryContainer();
                         }
                     });
@@ -1217,11 +1217,7 @@ function actionCalculation() {
                         main.setStamina(main.stamina - 1);
                         chosenMonster.stamina -= swordDamage;  // Reduce stamina
                         updateMonsterStats();  // Update stamina bar
-                        if (chosenMonster.health > 0) {
-                            monstersTurn();
-                        } else {
-                            createStoryContainer();
-                        }
+                        monstersTurn();
                     });
                 } else {
                     updateStoryLog("You deal " + swordDamage + " to the " + chosenMonster.name + ".", function() {
@@ -1231,6 +1227,8 @@ function actionCalculation() {
                         if (chosenMonster.health > 0) {
                             monstersTurn();
                         } else {
+                            monsterInHut = false;
+                            monsterDead = true;
                             createStoryContainer();
                         }
                     });
@@ -1239,9 +1237,11 @@ function actionCalculation() {
             attackedWithSword = false;
             break;
         case triedToFlee:
+            console.log("Attempting to flee...");
             updateStoryLog("You attempt to flee from the " + chosenMonster.name + ".", function() {
                 if (monsterSurpriseAttack) {
-                    actionCalculation("surpriseAttack");
+                    console.log("Handling surprise attack while fleeing...");
+                    activateMonsterAction("surpriseAttack");
                 } else {
                     main.setStamina(main.stamina - 1);
                     if (rand <= (main.stamina*10)) {
@@ -1260,7 +1260,8 @@ function actionCalculation() {
             break;
         case playerBlocked:
             if (monsterSurpriseAttack) {
-                actionCalculation("surpriseAttack");
+                console.log("Handling surprise attack while blocked...");
+                activateMonsterAction("surpriseAttack");
             } else {
                 updateStoryLog("You prepare to block the " + chosenMonster.name + "'s next attack.", function() {
                     monstersTurn();
@@ -1269,7 +1270,8 @@ function actionCalculation() {
             break;
         case playerWaited:
             if (monsterSurpriseAttack) {
-                actionCalculation("surpriseAttack");
+                console.log("Handling surprise attack while waiting...");
+                activateMonsterAction("surpriseAttack");
             } else {
                 updateStoryLog("You rest for the turn and regain 2 stamina.", function() {
                     main.setStamina(main.stamina + 2);
@@ -1279,6 +1281,7 @@ function actionCalculation() {
             break;
 
         default:
+            console.log("Default case, no player action");
             // If no attack was made, proceed directly to monster's turn
             monstersTurn();
             break;
@@ -1339,13 +1342,7 @@ function monstersTurn() {
                         activateMonsterAction("wait");
                     }
                 } else {
-                    if (rand >= 50) {
-                        activateMonsterAction("slash");
-                    } else if (rand >= 30 && rand < 50) {
-                        activateMonsterAction("rage");
-                    } else if (rand >= 15 && rand < 30) {
-                        activateMonsterAction("block");
-                    } else {
+                    if (rand >= 0)  {
                         activateMonsterAction("surpriseAttack");
                     }
                 }
@@ -1372,8 +1369,8 @@ function activateMonsterAction(action) {
                         playersTurn();
                     });
                 } else {
-                    updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
-                        main.setHealth(main.health - monsterAttackDamage.slash);
+                    updateStoryLog("You take " + (monsterAttackDamage.slash + rageCounter) + " damage.", function() {
+                        main.setHealth(main.health - (monsterAttackDamage.slash + rageCounter));
                         chosenMonster.stamina -= 1;
                         if (main.health > 0) {
                             playersTurn();
@@ -1395,9 +1392,9 @@ function activateMonsterAction(action) {
                         playersTurn();
                     });
                 } else {
-                    updateStoryLog("You take " + monsterAttackDamage.bite + " damage.", function() {
+                    updateStoryLog("You take " + (monsterAttackDamage.bite + rageCounter) + " damage.", function() {
                         updateStoryLog("The " + chosenMonster.name + " restores 1 stamina.", function() {
-                            main.setHealth(main.health - monsterAttackDamage.bite);
+                            main.setHealth(main.health - (monsterAttackDamage.bite + rageCounter));
                             if (main.health > 0) {
                                 playersTurn();
                             } else {
@@ -1414,54 +1411,58 @@ function activateMonsterAction(action) {
                 playersTurn();
             });
             break;
-        case "surpriseAttack":
-            if (monsterSurpriseAttack) {
-                switch (true) {
-                    case playerBlocked:
-                        updateStoryLog("The " + chosenMonster.name + " had prepared a suprise attack and strikes you but you block the attack", function() {
-                            playerBlocked = false;
+            case "surpriseAttack":
+                if (monsterSurpriseAttack) {
+                    if (triedToFlee) {
+                        updateStoryLog("The " + chosenMonster.name + " surprises you as you attempt to flee and strikes.", function() {
+                            updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
+                                triedToFlee = false;
+                                main.setHealth(main.health - monsterAttackDamage.slash);
+                                chosenMonster.stamina -= 1;
+                                monsterSurpriseAttack = false;  // Clear surprise attack
+
+                                if (main.health > 0) {
+                                    monstersTurn();  // Proceed to monster's turn
+                                } else {
+                                    storyNodeKey = "dead";
+                                    createStoryContainer();
+                                }
+                            });
+                        });
+                    } else if (playerBlocked) {
+                        updateStoryLog("The " + chosenMonster.name + " had prepared a surprise attack and strikes you, but you block the attack.", function() {
                             main.setStamina(main.stamina - 1);
                             chosenMonster.stamina -= 1;
-                            monstersTurn();
+                            playerBlocked = false;  // Reset playerBlocked AFTER the action
+                            monsterSurpriseAttack = false;  // Clear surprise attack
+                            monstersTurn();  // Proceed to monster's turn
                         });
-                        break;
-                    case playerWaited:
-                        updateStoryLog("As you attempt to rest the " + chosenMonster.name + " had prepared a suprise attack and strikes you", function() {
+                    } else if (playerWaited) {
+                        updateStoryLog("As you attempt to rest, the " + chosenMonster.name + " surprises you with an attack.", function() {
                             updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
                                 playerWaited = false;
                                 chosenMonster.stamina -= 1;
                                 main.setHealth(main.health - monsterAttackDamage.slash);
+                                monsterSurpriseAttack = false;  // Clear surprise attack
+
                                 if (main.health > 0) {
-                                    monstersTurn();
+                                    monstersTurn();  // Proceed to monster's turn
                                 } else {
                                     storyNodeKey = "dead";
                                     createStoryContainer();
                                 }
                             });
                         });
-                        break;
-                    default:
-                        updateStoryLog("The " + chosenMonster.name + " had prepared a suprise attack and strikes you when you attempt to flee", function() {
-                            updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
-                                main.setHealth(main.health - monsterAttackDamage.slash);
-                                chosenMonster.stamina -= 1;
-                                if (main.health > 0) {
-                                    monstersTurn();
-                                } else {
-                                    storyNodeKey = "dead";
-                                    createStoryContainer();
-                                }
-                            });
-                        });
-                        break;
+                    }
+                } else {
+                    updateStoryLog("The " + chosenMonster.name + " prepares something for your next turn.", function() {
+                        monsterSurpriseAttack = true;  // Attack if player doesn't attack or block next turn
+                        playersTurn();  // Proceed to player's turn
+                    });
                 }
-            } else {
-                updateStoryLog("The " + chosenMonster.name + " prepares something for your next turn.", function() {
-                    monsterSurpriseAttack = true; // attack's you if you don't attack or block next turn
-                    playersTurn();
-                });
-            }
-            break;
+                break;
+
+            
         case "wait":
             updateStoryLog("The " + chosenMonster.name + " rests for a turn and restores 2 stamina.", function() {
                 chosenMonster.stamina += 2;
@@ -1479,7 +1480,7 @@ function activateMonsterAction(action) {
                 } else {
                     updateStoryLog("You take " + monsterAttackDamage.ram + " damage.", function() {
                         updateStoryLog("The " + chosenMonster.name + " charge leaves you tired you lose 1 stamina.", function() {
-                            main.setHealth(main.health - monsterAttackDamage.ram);
+                            main.setHealth(main.health - (monsterAttackDamage.ram + rageCounter));
                             main.setStamina(main.stamina - 1);
                             chosenMonster.stamina -= 1;
                             if (main.health > 0) {
