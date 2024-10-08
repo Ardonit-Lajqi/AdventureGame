@@ -848,14 +848,76 @@ function handleSpecialActions(choice, pressedButton) {
                 monsterBattle(monster);
                 break;
             case "LLF":
-                updateStoryLogQueue(["On the way you picked up some flowers"], function () {
-                    storyNodeKey = "leftLLF";
+                updateStoryLogQueue(["On the way you picked up some flowers"], function() {
+                    storyNodeKey = "forwardLLF";
                     createStoryContainer();
                 } );
+                break;
+            case "LFFFR":
+                updateStoryLogQueue(["You found some green moss "], function() {
+                    storyNodeKey = "leftLFFFR";
+                    createStoryContainer();
+                });
                 break;
             case "DeepForestStart":
                 updateStoryLogQueue(["You recognize this as where you started"], function(){
                     storyNodeKey = "startDeepForest";
+                    createStoryContainer();
+                });
+                break;
+            case "DeepForestExit":
+                updateStoryLogQueue(["You found yourself out from the deep forest"], function(){
+                    updateStoryLogQueue(["You continues thought the forest"], function(){
+                        storyNodeKey = "forestCity";
+                        createStoryContainer();
+                    });
+                });
+                break;
+            case "LFRL":
+                updateStoryLogQueue(["You picked upp red moss and continue on"], function(){
+                    storyNodeKey = "forwardFFFF";
+                    createStoryContainer();
+                });
+                break;
+            case "LFFF":
+                updateStoryLogQueue(["You found a magic stone on the ground"], function(){
+                    storyNodeKey = "forwardLFFFF";
+                    createStoryContainer();
+                });
+                break;
+            case "FallDownInPit":
+                updateStoryLogQueue(["You fall down in pit and died"], function() {
+                    storyNodeKey = "dead";
+                    createStoryContainer();
+                });
+                break;
+            case "LFFFRF":
+                rand = Math.floor(Math.random() * 100);
+
+                if (rand >= 50) {
+                    updateStoryLogQueue(["You found a potion flask"], function() {
+                        storyNodeKey = "forwardLFFFRF"; // ge en potion flaska
+                        createStoryContainer();
+                    });
+                }
+                else{
+                    updateStoryLogQueue(["You step on broken glass"], function(){
+                        main.setHealth(main.health - 1);
+                        storyNodeKey = "forwardLFFFRF";
+                        createStoryContainer();
+                    });
+                }
+                break;
+            case "F":
+                updateStoryLogQueue(["You trip on a rock and hit yourself"], function() {
+                    main.setHealth(main.health - 1);
+                    storyNodeKey = "startDeepForest";
+                    createStoryContainer();
+                });
+                break;
+            case "continueForward":
+                updateStoryLogQueue(["You continues thought the forest"], function(){
+                    storyNodeKey = "forestCity";
                     createStoryContainer();
                 });
                 break;
