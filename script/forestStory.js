@@ -68,9 +68,9 @@ export let storyNode = {
         text: "You see a room with a demoic circle in the middle.",
         question: "What do you want to do?",
         choices: [
-            { text: "Leave circle", specialAction: true, id:"LeaveHutCircle" },
-            { text: "Search circle", specialAction: true, id:"SearchHutCircle" },
-            { text: "Summon", specialAction: true, id:"Summon" }
+            { text: "Leave circle", specialAction: true, id: "LeaveHutCircle" },
+            { text: "Search circle", specialAction: true, id: "SearchHutCircle" },
+            { text: "Summon", specialAction: true, id: "Summon" }
         ]
     },
 
@@ -78,7 +78,7 @@ export let storyNode = {
         text: "You died",
         question: "You are dead",
         choices: [
-            { text: "Restart", next: "restart" }
+            { text: "Restart", specialAction: true, id: "restart" }
         ]
     },
 
@@ -86,7 +86,7 @@ export let storyNode = {
         text: "Do you want to attempt to summon a demon?",
         question: "What do you want to do",
         choices: [
-            { text: "Summon demon", specialAction: true, id:"SummonDemon" },
+            { text: "Summon demon", specialAction: true, id: "SummonDemon" },
             { text: "Leave", next: "portal" }
         ]
     },
@@ -95,8 +95,26 @@ export let storyNode = {
         text: "You pass a small town in the forest",
         question: "What do you want to do?",
         choices: [
-            { text: "look around",}, //Behöver fixa SpecialAction för lämna Staden
+            { text: "look around"}, //Behöver fixa SpecialAction för lämna Staden
             { text: "investigate"} // investigera har inte fixat än
+        ]
+    },
+    
+    afterMonster: {
+        text: "You defeat the monster, whould you like to spare it's life?",
+        question: "What do you want to do",
+        choices: [
+            { text: "Kill the monster", specialAction: true, id: "KillHutMonster" },
+            { text: "Let it go", specialAction: true, id: "SpareHutMonster" }
+        ]
+    },
+
+    backToHut: {
+        text: "You find yourself in the forest",
+        question: "What do you want to do",
+        choices: [
+            { text: "Return to the hut", next: "hut" },
+            { text: "Continue into the forest", next: "OutsideCity" }
         ]
     },
 

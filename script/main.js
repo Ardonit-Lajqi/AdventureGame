@@ -19,18 +19,33 @@ export let wanted = 0;
 export let coin = 0;
 
 export function setStamina(value) {
+    if (value > 10) {
+        value = 10;
+    } else if (value < 0) {
+        value = 0;
+    }
     stamina = value;
     staminaBar.innerHTML = value + " Sp";
     staminaBar.style.width = (value * 10) + "%"; // Adjust percentage as needed
 }
 
 export function setHealth(value) {
+    if (value > 10) {
+        value = 10;
+    } else if (value < 0) {
+        value = 0;
+    }
     health = value;
     healthBar.innerHTML = value + " Hp";
     healthBar.style.width = (value * 10) + "%"; // Adjust percentage as needed
 }
 
 export function setMana(value) {
+    if (value > 10) {
+        value = 10;
+    } else if (value < 0) {
+        value = 0;
+    }
     mana = value;
     manaBar.innerHTML = value + " Mp";
     manaBar.style.width = (value * 10) + "%"; // Adjust percentage as needed
@@ -42,6 +57,11 @@ export function setCoins(value) {
 }
 
 export function setWanted(value) {
+    if (value > 100) {
+        value = 100;
+    } else if (value < 0) {
+        value = 0;
+    }
     wanted = value;
     wantedRating.innerHTML = value + "/100";
 }
