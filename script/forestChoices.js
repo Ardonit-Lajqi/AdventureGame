@@ -2,7 +2,7 @@ import * as main from './main.js';
 import { storyNode } from './forestStory.js';
 
 class Enemy {
-    constructor(name, health, stamina, level, image) {
+    constructor(name, health, stamina, level, image, actions) {
         this.name = name;
         this.health = health;
         this.maxHealth = health;
@@ -10,13 +10,18 @@ class Enemy {
         this.maxStamina = stamina;
         this.level = level;
         this.image = image;  // Added image attribute
+        this.actions = actions;
     }
 }
+let pressedButton = null;
 
 let searchedHut = false;
 let searchedCircle = false;
 
 let isDead = false;
+
+let playerTurn = false;
+let monsterTurn = false;
 
 let monsterInHut = true;
 let monsterDead = false;
@@ -40,7 +45,12 @@ let haveBones = false;
 
 let haveRitualKnife = false;
 
+let swordDamage = 2;
 let haveSword = 0;
+let canAttackWithSword = false;
+let attackedWithSword = false;
+
+let triedToFlee = false;
 
 let haveMagicPotion = 0;
 
@@ -59,13 +69,29 @@ let storyNodeKey = "";
 let gamePaused = false;
 
 let fistDamage = 1;
-let monsterBlocked = false;
-let playerBlocked = false;
+let canUseFists = false;
+let attackedWithFists = false;
 
-let monster = new Enemy("Monster", 10, 10, 5, "../img/monsters/monsterImg.jpg");
-let snake = new Enemy("Snake", 2, 3, 1, "");
-let boar = new Enemy("Boar", 4, 5, 3, "");
-let demon = new Enemy("Demon", 15, 10, 7, "");
+let playerBlocked = false;
+let playerWaited = false;
+
+let monsterSurpriseAttack = false;
+let monsterBlocked = false;
+let rageCounter = 0;
+
+
+let monster = new Enemy("Monster", 10, 10, 5, "../img/monsters/monsterImg.jpg", ["slash", "bite", "rage", "block", "wait", "surpriseAttack"]);
+let snake = new Enemy("Snake", 2, 3, 1, "../img/monsters/SnakesImg.jpg", []);
+let boar = new Enemy("Boar", 4, 5, 3, "../img/monsters/BoarImg.jpg", []);
+let demon = new Enemy("Demon", 15, 10, 7, "", []);
+
+let monsterAttackDamage = {
+    slash: 2 + rageCounter,
+    bite: 1 + rageCounter,
+    ram: 1 + rageCounter,
+}
+
+let chosenMonster = null;
 
 
 // Set initial game state
@@ -273,6 +299,8 @@ function addClickEvent(itemElement) {
             } else if (itemData.id === 'spellbook') {
                 readBook = true;
                 updateStoryLog(itemData.text);
+            } else if (itemData.id === 'sword' && canAttackWithSword) {
+                attackWithSword();
             } else {
                 updateStoryLog(itemData.text);
             }
@@ -292,7 +320,7 @@ function clearSaveData() {
 document.getElementById("clear").onclick = clearSaveData;
 
 // Function to save container state
-function saveContainerState(containerNumber, pressedButton, rewards = [], specialCard = "") {
+function saveContainerState(containerNumber, rewards = [], specialCard = "") {
     let savedContainer = {
         id: "card" + containerNumber,
         cardKey: storyNodeKey,
@@ -384,7 +412,7 @@ function loadInventory(loading = false) {
 }
 
 
-function createStoryContainer(containerNumber = null, pressedButton = null, loading = false) {
+function createStoryContainer(containerNumber = null, loading = false) {
     if (!storyNode[storyNodeKey]) {
         console.error(`Story node "${storyNodeKey}" does not exist.`);
         return;
@@ -446,11 +474,11 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
             }
     
             // Save the state after pressing the button
-            saveContainerState(currentContainerCount, pressedButton); // Call save here
+            saveContainerState(currentContainerCount); // Call save here
     
             // Special actions (like reward cards) should not create new containers
             if (choice.specialAction) {
-                handleSpecialActions(choice, pressedButton);
+                handleSpecialActions(choice);
                 return;
             }
     
@@ -469,7 +497,7 @@ function createStoryContainer(containerNumber = null, pressedButton = null, load
     createdContainers.push({ container, containerNumber: currentContainerCount });
 
     if (!loading) {
-        saveContainerState(currentContainerCount, pressedButton, [], ""); // Reset special state for the next container
+        saveContainerState(currentContainerCount, [], ""); // Reset special state for the next container
         saveStats();
         saveVaribles();
     }
@@ -597,7 +625,7 @@ function typeWriter(txt, speed, p, logEntry, onComplete) {
     }
 }
 
-function handleSpecialActions(choice, pressedButton) {
+function handleSpecialActions(choice) {
     if (choice.specialAction) {
         console.log("Special action triggered for:", choice.id);
         let rand = Math.floor(Math.random() * 100);
@@ -609,7 +637,8 @@ function handleSpecialActions(choice, pressedButton) {
                         rand = Math.floor(Math.random() * 100);
                         if (rand >= 50) {
                             main.setStamina(main.stamina - 1);
-                            warningCard();
+                            rewardItem = randomItems("hut");
+                            rewardCard();
                             updateStoryLog("As you open the door you see the monster and run.", function() {
                                 storyNodeKey = "escapedMonster";
                                 createStoryContainer();
@@ -721,7 +750,7 @@ function handleSpecialActions(choice, pressedButton) {
                             rewardItem = randomItems("hut"); // Generate reward items
                             console.log('Reward items before calling rewardCard:', rewardItem); // Log the items
 
-                            rewardCard(pressedButton);
+                            rewardCard();
     
                             // Now let storyNodeKey be updated to the next node and create container directly here
                             storyNodeKey = "trapdoor";
@@ -800,7 +829,7 @@ function handleSpecialActions(choice, pressedButton) {
                         rewardItem = randomItems("circle"); // Generate reward items
                         console.log('Reward items before calling rewardCard:', rewardItem); // Log the items
                         
-                        rewardCard(pressedButton);
+                        rewardCard();
 
                         // Now let storyNodeKey be updated to the next node and create container directly here
                         storyNodeKey = "portal";
@@ -839,13 +868,18 @@ function handleSpecialActions(choice, pressedButton) {
             case "SummonDemon":
                 updateStoryLogQueue(["As you follow the instructions in the book you successfully summon a demon."], function() {
                     updateStoryLogQueue(["He thanks you for releasing him before attacking you."], function() {
-                        monsterBattle(demon); 
+                        chosenMonster = demon;
+                        monsterBattle(); 
                     });
                 });
                 break;
-            
-            case "Return to fight monster":
-                monsterBattle(monster);
+            case "ReturnToFightMonster":
+                storyNodeKey = "afterMonster";
+                chosenMonster = monster;
+                monsterBattle();
+                break;
+            case "restart":
+                clearSaveData()
                 break;
             case "LLF":
                 updateStoryLogQueue(["On the way you picked up some flowers"], function () {
@@ -946,14 +980,25 @@ function useRopeToAscend() {
     });
 }
 
+function attackWithSword() {
+    canAttackWithSword = false;
+    attackedWithSword = true;
+    actionCalculation();
+}
 
-function monsterBattle(selectedMonster) {
-    const monster = selectedMonster || monsters[Math.floor(Math.random() * monsters.length)];
-    
+
+function monsterBattle() {
+    rageCounter = 0;
+    monsterBlocked = false;
+    playerBlocked = false;
+    playerTurn = false;
+    monsterTurn = false;
+
     const fightCard = createFightCard(monster);
     document.getElementById('game').appendChild(fightCard);
-    
-    const monsterElements = {
+
+    // Create monsterElements and assign them to chosenMonster.elements
+    chosenMonster.elements = {
         monsterLevel: document.getElementById('monsterLevel'),
         monsterHealth: document.getElementById('monsterHealth'),
         monsterStamina: document.getElementById('monsterStamina'),
@@ -964,14 +1009,72 @@ function monsterBattle(selectedMonster) {
         blockButton: document.getElementById('blockButton'),
         waitButton: document.getElementById('waitButton')
     };
+    console.log(chosenMonster.elements);
 
-    updateStoryLog("You enter combat with the " + monster.name + ".", function() {
-        playersTurn(monster, monsterElements);
-        updateMonsterStats(monster, monsterElements);
+    const elements = chosenMonster.elements;
+
+    elements.attackButton.addEventListener('click', function() {
+        if (playerTurn) {
+            updateStoryLog("Please select an item or right-click to attack with fists.", function() {
+                canAttackWithSword = true;
+                canUseFists = true;
+            });
+        } else {
+            updateStoryLog("It is not your turn.", function() {});
+        }
+    });
+    
+    elements.attackButton.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        if (playerTurn) {
+            if (canUseFists) {
+                if (main.stamina > 0) {
+                    attackedWithFists = true
+                    canUseFists = false;
+                    actionCalculation();
+                } else {
+                    updateStoryLog("You don't have enough stamina.", function() {});
+                }
+            }
+        } else {
+            updateStoryLog("It is not your turn.", function() {});
+        }
+    });
+
+    elements.fleeButton.addEventListener('click', function() {
+        if (playerTurn) {
+            triedToFlee = true;
+            actionCalculation();
+        } else {
+            updateStoryLog("It is not your turn.", function() {});
+        }
+    });
+
+    elements.blockButton.addEventListener('click', function() {
+        if (playerTurn) {
+            playerBlocked = true;
+            actionCalculation();
+        } else {
+            updateStoryLog("It is not your turn.", function() {});
+        }
+    });
+
+    elements.waitButton.addEventListener('click', function() {
+        if (playerTurn) {
+            playerWaited = true;
+            actionCalculation();
+        } else {
+            updateStoryLog("It is not your turn.", function() {});
+        }
+    });
+
+    updateStoryLog("You enter combat with the " + chosenMonster.name + ".", function() {
+        playersTurn(chosenMonster.elements);  // Pass the elements to player's turn
+        updateMonsterStats();
     });
 }
 
-function createFightCard(monster) {
+function createFightCard() {
     const fightCard = document.createElement("div");
     fightCard.classList.add("fightCard");
     fightCard.innerHTML = `
@@ -979,15 +1082,15 @@ function createFightCard(monster) {
             <div class="row">
                 <div class="col-2">
                     <div class="card monster-lvl">
-                        <h2 class="text-center text-light" id="monsterLevel">lvl ${monster.level}</h2>
+                        <h2 class="text-center text-light" id="monsterLevel">lvl ${chosenMonster.level}</h2>
                     </div>
                 </div>
                 <div class="col-10">
-                    <h1 class="monster-name card text-center text-light" id="monsterName">${monster.name}</h1>
-                    ${createProgressBar("health", monster.health, monster.maxHealth, "img/icons/heart.png")}
-                    ${createProgressBar("stamina", monster.stamina, monster.maxStamina, "img/icons/lighting.png")}
+                    <h1 class="monster-name card text-center text-light" id="monsterName">${chosenMonster.name}</h1>
+                    ${createProgressBar("health", chosenMonster.health, chosenMonster.maxHealth, "img/icons/heart.png")}
+                    ${createProgressBar("stamina", chosenMonster.stamina, chosenMonster.maxStamina, "img/icons/lighting.png")}
                 </div>
-                <img src="${monster.image}" alt="${monster.name}" id="monsterImg">
+                <img src="${chosenMonster.image}" alt="${chosenMonster.name}" id="monsterImg">
             </div>
         </div>
         
@@ -1038,71 +1141,366 @@ function createProgressBar(type, value, maxValue, icon) {
     `;
 }
 
-function playersTurn(monster, monsterElements) {
+function playersTurn() {
+    const elements = chosenMonster.elements;
+    canAttackWithSword = false;
+    canUseFists = false;
+    playerTurn = true;
+    monsterTurn = false;
+    triedToFlee = false;
+    playerBlocked = false;
+    playerWaited = false;
+
     saveStats();
-    monsterElements.attackButton.addEventListener('click', function() {
-        updateStoryLog("Please select an item to use or left-click the attack button to use your fists.", function() {});
-    });
-    
-    monsterElements.attackButton.addEventListener('contextmenu', function(event) {
-        event.preventDefault();
-        if (main.stamina > 0) {
-            updateStoryLog("You punch the " + monster.name + ".", function() {
-                // Replace with the actual logic for block checking and damage calculation
-                if (monsterBlocked) {
-                    updateStoryLog("The monster blocks your punch and loses " + fistDamage + " stamina.", function() {
-                        monster.stamina -= fistDamage;  // Reduce stamina
-                        updateMonsterStats(monster, monsterElements);  // Update stamina bar
-                        monstersTurn(monster, monsterElements);
-                    });
-                } else {
-                    updateStoryLog("You deal " + fistDamage + " damage.", function() {
-                        monster.health -= fistDamage;  // Reduce health
-                        updateMonsterStats(monster, monsterElements);  // Update health bar
-                        monstersTurn(monster, monsterElements);
-                    });
-                }
-            });
-        } else {
-            updateStoryLog("You don't have enough stamina.", function() {});
-        }
-    });
-
-    monsterElements.fleeButton.addEventListener('click', function() {
-        // Flee logic
-    });
-
-    monsterElements.blockButton.addEventListener('click', function() {
-        // Block logic
-    });
-
-    monsterElements.waitButton.addEventListener('click', function() {
-        // Wait logic
-    });
-
     updateStoryLog("You start your turn.", function() {
         updateStoryLog("Please choose an action.", function() {});
     });
 }
 
-function updateMonsterStats(monster, monsterElements) {
-    monsterElements.monsterLevel.innerHTML = "lvl " + monster.level;
+function updateMonsterStats() {
+    const elements = chosenMonster.elements;  // Get the stored monster elements
+    elements.monsterLevel.innerHTML = "lvl " + chosenMonster.level;
 
     // Update health display
-    monsterElements.monsterHealth.innerHTML = monster.health + " Hp";
-    monsterElements.monsterHealth.style.width = (monster.health / monster.maxHealth) * 100 + "%";
+    elements.monsterHealth.innerHTML = chosenMonster.health + " Hp";
+    elements.monsterHealth.style.width = (chosenMonster.health / chosenMonster.maxHealth) * 100 + "%";
 
     // Update stamina display
-    monsterElements.monsterStamina.innerHTML = monster.stamina + " Sp";
-    monsterElements.monsterStamina.style.width = (monster.stamina / monster.maxStamina) * 100 + "%";
+    elements.monsterStamina.innerHTML = chosenMonster.stamina + " Sp";
+    elements.monsterStamina.style.width = (chosenMonster.stamina / chosenMonster.maxStamina) * 100 + "%";
 }
 
-function monstersTurn(monster, monsterElements) {
-    updateMonsterStats(monster, monsterElements);
+function actionCalculation() {
+    const elements = chosenMonster.elements;  // Access elements from chosenMonster
+
     saveStats();
-    updateStoryLog("The " + monster.name + " starts its turn.", function() {
-        // Monster turn logic
+
+    playerTurn = false;
+    monsterTurn = true;
+    let rand = Math.floor(Math.random() * 100);
+
+    // Check which attack was made
+    switch (true) {
+        case attackedWithFists:
+            updateStoryLog("You punch the " + chosenMonster.name + ".", function() {
+                if (monsterBlocked) {
+                    updateStoryLog("The monster blocks your punch and loses " + fistDamage + " stamina.", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.stamina -= fistDamage;  // Reduce stamina
+                        updateMonsterStats();  // Update stamina bar
+                        if (chosenMonster.health > 0) {
+                            monstersTurn();
+                        } else {
+                            createStoryContainer();
+                        }
+                    });
+                } else {
+                    updateStoryLog("You deal " + fistDamage + " damage.", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.health -= fistDamage;  // Reduce health
+                        updateMonsterStats();  // Update health bar
+                        if (chosenMonster.health > 0) {
+                            monstersTurn();
+                        } else {
+                            createStoryContainer();
+                        }
+                    });
+                }
+            });
+            attackedWithFists = false;
+            break;
+
+        case attackedWithSword:
+            updateStoryLog("You swing your sword at the " + chosenMonster.name + ".", function() {
+                if (monsterBlocked) {
+                    updateStoryLog("The monster blocks your slash and loses " + swordDamage + " stamina.", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.stamina -= swordDamage;  // Reduce stamina
+                        updateMonsterStats();  // Update stamina bar
+                        if (chosenMonster.health > 0) {
+                            monstersTurn();
+                        } else {
+                            createStoryContainer();
+                        }
+                    });
+                } else {
+                    updateStoryLog("You deal " + swordDamage + " to the " + chosenMonster.name + ".", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.health -= swordDamage;  // Reduce health
+                        updateMonsterStats();  // Update health bar
+                        if (chosenMonster.health > 0) {
+                            monstersTurn();
+                        } else {
+                            createStoryContainer();
+                        }
+                    });
+                }
+            });
+            attackedWithSword = false;
+            break;
+        case triedToFlee:
+            updateStoryLog("You attempt to flee from the " + chosenMonster.name + ".", function() {
+                if (monsterSurpriseAttack) {
+                    actionCalculation("surpriseAttack");
+                } else {
+                    main.setStamina(main.stamina - 1);
+                    if (rand <= (main.stamina*10)) {
+                        updateStoryLog("You successfully fled from the " + chosenMonster.name + ".", function() {
+                            storyNodeKey = "backToHut"
+                            createStoryContainer();
+                        });
+                    } else {
+                        updateStoryLog("You failed to flee from the " + chosenMonster.name + ".", function() {
+                            monstersTurn();
+                        });
+                    }
+                }
+
+            });
+            break;
+        case playerBlocked:
+            if (monsterSurpriseAttack) {
+                actionCalculation("surpriseAttack");
+            } else {
+                updateStoryLog("You prepare to block the " + chosenMonster.name + "'s next attack.", function() {
+                    monstersTurn();
+                });
+            }
+            break;
+        case playerWaited:
+            if (monsterSurpriseAttack) {
+                actionCalculation("surpriseAttack");
+            } else {
+                updateStoryLog("You rest for the turn and regain 2 stamina.", function() {
+                    main.setStamina(main.stamina + 2);
+                    monstersTurn();
+                });
+            }
+            break;
+
+        default:
+            // If no attack was made, proceed directly to monster's turn
+            monstersTurn();
+            break;
+    }
+}
+
+// Function to handle the monster's turn after the player's attack
+function monstersTurn() {
+    playerTurn = false;
+    monsterTurn = true;
+    monsterBlocked = false;
+    monsterSurpriseAttack = false;
+
+    saveStats();
+    updateMonsterStats();  // Call the update for stats
+    updateStoryLog("The " + chosenMonster.name + " starts its turn.", function() {
+        let monsterRemainingHealth = (chosenMonster.health / chosenMonster.maxHealth) * 100;
+        let monsterRemainingStamina = (chosenMonster.stamina / chosenMonster.maxStamina) * 100;
+        let rand = Math.floor(Math.random() * 100);
+        console.log(chosenMonster.name);
+        switch (chosenMonster.name) {
+            case "Monster":
+                console.log("random = " + rand);
+                if (monsterRemainingStamina <= 1) {
+                    if (rand >= 80) {
+                        activateMonsterAction("bite");
+                    } else if (rand >= 75 && rand < 80) {
+                        activateMonsterAction("rage");
+                    } else {
+                        activateMonsterAction("wait");
+                    }
+                } else if (monsterRemainingStamina <= (chosenMonster.maxStamina / 4) && monsterRemainingStamina > 1) {
+                    if (rand >= 90) {
+                        activateMonsterAction("slash");
+                    } else if (rand >= 70 && rand < 90) {
+                        activateMonsterAction("bite");
+                    } else if (rand >= 60 && rand < 70) {
+                        activateMonsterAction("block");
+                    } else if (rand >= 50 && rand < 60) {
+                        activateMonsterAction("surpriseAttack");
+                    } else if (rand >= 45 && rand < 50) {
+                        activateMonsterAction("rage");
+                    } else {
+                        activateMonsterAction("wait");
+                    }
+                } else if (monsterRemainingStamina <= (chosenMonster.maxStamina / 2) && monsterRemainingStamina > (chosenMonster.maxStamina / 4)) {
+                    if (rand >= 80) {
+                        activateMonsterAction("slash");
+                    } else if (rand >=65 && rand <80) {
+                        activateMonsterAction("bite");
+                    } else if (rand >= 50 && rand < 65) {
+                        activateMonsterAction("block")
+                    } else if (rand >= 35 && rand < 50) {
+                        activateMonsterAction("surpriseAttack");
+                    } else if (rand >= 20 && rand < 35) {
+                        activateMonsterAction("rage");
+                    } else {
+                        activateMonsterAction("wait");
+                    }
+                } else {
+                    if (rand >= 50) {
+                        activateMonsterAction("slash");
+                    } else if (rand >= 30 && rand < 50) {
+                        activateMonsterAction("rage");
+                    } else if (rand >= 15 && rand < 30) {
+                        activateMonsterAction("block");
+                    } else {
+                        activateMonsterAction("surpriseAttack");
+                    }
+                }
+                break;
+        
+            case "Boar":
+                break;
+            case "Demon":
+                break;
+            case "Snake":
+                break;
+        }
     });
+}
+
+function activateMonsterAction(action) {
+    switch (action) {
+        case "slash":
+            updateStoryLog("The " + chosenMonster.name + " slashes you with it's claws.", function() {
+                if (playerBlocked) {
+                    updateStoryLog("You blocked the " + chosenMonster.name + "'s slash.", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.stamina -= 1;
+                        playersTurn();
+                    });
+                } else {
+                    updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
+                        main.setHealth(main.health - monsterAttackDamage.slash);
+                        chosenMonster.stamina -= 1;
+                        if (main.health > 0) {
+                            playersTurn();
+                        } else {
+                            storyNodeKey = "dead";
+                            createStoryContainer();
+                        }
+                    });
+                }
+            });
+            break;
+    
+        case "bite":
+            updateStoryLog("The " + chosenMonster.name + " attempts to bite you.", function() {
+                if (playerBlocked) {
+                    updateStoryLog("You blocked the " + chosenMonster.name + "'s bite.", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.stamina -= 1;
+                        playersTurn();
+                    });
+                } else {
+                    updateStoryLog("You take " + monsterAttackDamage.bite + " damage.", function() {
+                        updateStoryLog("The " + chosenMonster.name + " restores 1 stamina.", function() {
+                            main.setHealth(main.health - monsterAttackDamage.bite);
+                            if (main.health > 0) {
+                                playersTurn();
+                            } else {
+                                storyNodeKey = "dead";
+                                createStoryContainer();
+                            }
+                        });
+                    });
+                }
+            });
+        case "block":
+            updateStoryLog("The " + chosenMonster.name + " prepares something for your next turn.", function() {
+                monsterBlocked = true;
+                playersTurn();
+            });
+            break;
+        case "surpriseAttack":
+            if (monsterSurpriseAttack) {
+                switch (true) {
+                    case playerBlocked:
+                        updateStoryLog("The " + chosenMonster.name + " had prepared a suprise attack and strikes you but you block the attack", function() {
+                            playerBlocked = false;
+                            main.setStamina(main.stamina - 1);
+                            chosenMonster.stamina -= 1;
+                            monstersTurn();
+                        });
+                        break;
+                    case playerWaited:
+                        updateStoryLog("As you attempt to rest the " + chosenMonster.name + " had prepared a suprise attack and strikes you", function() {
+                            updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
+                                playerWaited = false;
+                                chosenMonster.stamina -= 1;
+                                main.setHealth(main.health - monsterAttackDamage.slash);
+                                if (main.health > 0) {
+                                    monstersTurn();
+                                } else {
+                                    storyNodeKey = "dead";
+                                    createStoryContainer();
+                                }
+                            });
+                        });
+                        break;
+                    default:
+                        updateStoryLog("The " + chosenMonster.name + " had prepared a suprise attack and strikes you when you attempt to flee", function() {
+                            updateStoryLog("You take " + monsterAttackDamage.slash + " damage.", function() {
+                                main.setHealth(main.health - monsterAttackDamage.slash);
+                                chosenMonster.stamina -= 1;
+                                if (main.health > 0) {
+                                    monstersTurn();
+                                } else {
+                                    storyNodeKey = "dead";
+                                    createStoryContainer();
+                                }
+                            });
+                        });
+                        break;
+                }
+            } else {
+                updateStoryLog("The " + chosenMonster.name + " prepares something for your next turn.", function() {
+                    monsterSurpriseAttack = true; // attack's you if you don't attack or block next turn
+                    playersTurn();
+                });
+            }
+            break;
+        case "wait":
+            updateStoryLog("The " + chosenMonster.name + " rests for a turn and restores 2 stamina.", function() {
+                chosenMonster.stamina += 2;
+                playersTurn();
+            });
+            break;
+        case "ram":
+            updateStoryLog("The " + chosenMonster.name + " charges you.", function() {
+                if (playerBlocked) {
+                    updateStoryLog("You blocked the " + chosenMonster.name + "'s charge.", function() {
+                        main.setStamina(main.stamina - 1);
+                        chosenMonster.stamina -= 1;
+                        playersTurn();
+                    });
+                } else {
+                    updateStoryLog("You take " + monsterAttackDamage.ram + " damage.", function() {
+                        updateStoryLog("The " + chosenMonster.name + " charge leaves you tired you lose 1 stamina.", function() {
+                            main.setHealth(main.health - monsterAttackDamage.ram);
+                            main.setStamina(main.stamina - 1);
+                            chosenMonster.stamina -= 1;
+                            if (main.health > 0) {
+                                playersTurn();
+                            } else {
+                                storyNodeKey = "dead";
+                                createStoryContainer();
+                            }
+                        });
+                    });
+                }
+            });
+            break;
+        case "rage":
+            updateStoryLog("The " + chosenMonster.name + " rages, all of it's attacks deal an additional damage for this combat.", function() {
+                rageCounter += 1;
+                playersTurn();
+            });
+            break;
+    }
+
 }
 
 
@@ -1114,7 +1512,7 @@ function warningCard() {
     '<span class="position-absolute top-0 start-0 m-2">!</span><span class="position-absolute top-0 end-0 m-2">!</span><span class="position-absolute bottom-0 start-0 m-2">!</span><span class="position-absolute bottom-0 end-0 m-2">!</span>';
 }
 
-function rewardCard(pressedButton) {
+function rewardCard() {
     console.log(containerCount, 'current count');
 
     let previousCard = document.getElementById('card' + (containerCount - 1));
@@ -1174,7 +1572,7 @@ function rewardCard(pressedButton) {
             }
 
             // Save container state after each item is clicked
-            saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
+            saveContainerState(rewardId, rewardedItemsLeft, specialCard);
 
             // Reset reward state when all items are claimed
             if (rewardedItemsLeft.length === 0) {
@@ -1188,7 +1586,7 @@ function rewardCard(pressedButton) {
     });
 
     // Initially save the container state with all rewards before any are claimed
-    saveContainerState(rewardId, pressedButton, rewardedItemsLeft, specialCard);
+    saveContainerState(rewardId, rewardedItemsLeft, specialCard);
     console.log('Container state saved with rewards'); // Log saving
 }
 
